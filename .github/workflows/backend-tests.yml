@@ -1,0 +1,55 @@
+name: Backend Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: paladar_inka_test
+          POSTGRES_USER: paladar_user
+          POSTGRES_PASSWORD: change_me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U paladar_user -d paladar_inka_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_NAME: Paladar Inka API
+      APP_ENV: test
+      DEBUG: "false"
+      API_V1_PREFIX: /api/v1
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: paladar_inka_test
+      DATABASE_USER: paladar_user
+      DATABASE_PASSWORD: change_me
+      CORS_ORIGINS: http://localhost:5173
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[test]"
+
+      - name: Run backend tests
+        working-directory: backend
+        run: pytest -v

@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vs/
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Tests
+playwright-report/
+test-results/
+
+# Sensitive/local data
+datasets/private/
+secrets/
+
+# Local artifacts
+*.log
+*.sqlite
+*.db
+models/local/
+artifacts/local/
