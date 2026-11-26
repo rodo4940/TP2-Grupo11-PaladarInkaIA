@@ -74,7 +74,7 @@ with sync_playwright() as p:
     page.get_by_text('Producto actualizado').wait_for()
     screenshot(page,'16_producto_modificado_real.png','PATCH /products/1 aplicado y tabla actualizada')
     nav.get_by_role('button',name='Clientes').click()
-    page.get_by_role('heading',name='Clientes').wait_for()
+    page.get_by_role('heading',name='Clientes',exact=True).wait_for()
     page.get_by_label('Nombre completo').fill('Cliente verificación QA')
     page.get_by_role('button',name='Guardar cliente').click()
     page.get_by_text('Cliente registrado').wait_for()
