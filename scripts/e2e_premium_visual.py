@@ -62,8 +62,14 @@ with sync_playwright() as p:
     capture(page,92,'premium_dashboard_1536','Dashboard premium: indicadores reales y fotografía cargada')
     nav(page,'Ventas / POS','Nuevo pedido')
     assert page.locator('.product-card').count()>=4,'Faltan pizzas del catálogo semilla'
-    page.wait_for_function("""() => [...document.querySelectorAll('.product-card img')].length>=4 && [...document.querySelectorAll('.product-card img')].every(el=>el.complete && el.naturalWidth>0)""",timeout=25000)
-    capture(page,93,'premium_catalogo_fotos_reales','Cuatro tarjetas de pizzas con fotografías CDN verificadas y precios de API')
+    page.wait_for_function("""() => {
+        const cards=[...document.querySelectorAll('.product-card')];
+        const imgs=[...document.querySelectorAll('.product-card img')];
+        return cards.length>=4 && imgs.length===cards.length && imgs.every(el=>el.complete && el.naturalWidth>0);
+    }""",timeout=25000)
+    # El archivo cargado puede no estar pintado al tomar fullPage screenshots.
+    page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
+    capture(page,93,'premium_catalogo_fotos_reales','Todas las tarjetas de pizzas con fotografías CDN decodificadas y verificadas y precios de API')
     page.locator('.product-card').first.click()
     capture(page,94,'premium_carrito_una_pizza','Carrito con suma al seleccionar una ficha visual')
     page.locator('.product-card').nth(1).click()
