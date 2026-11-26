@@ -1,0 +1,18 @@
+{$PALADAR_DOMAIN} {
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+    @api path /api/*
+    handle @api {
+        reverse_proxy backend:8000
+    }
+    # Do not publish Swagger/OpenAPI in production.
+    @blocked path /docs /redoc /openapi.json /metrics
+    handle @blocked { respond "Not Found" 404 }
+    handle { reverse_proxy frontend:80 }
+}
