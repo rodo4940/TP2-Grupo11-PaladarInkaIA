@@ -20,3 +20,5 @@
 
 ## Go/no-go
 No cambiar a «Aprobado para producción» hasta que cada bloqueo tenga dueño, evidencia fechada y aprobación escrita. Un CI verde es prueba técnica del código bajo pruebas, **no** aprobación empresarial.
+## Sesiones y contraseñas (actualización)
+La revisión incluye PATCH/POST de cambio y restablecimiento de contraseña con Argon2, versionado de token y revocación inmediata de sesiones JWT. El mecanismo administrativo no equivale a recuperación autónoma segura por correo. Aplicar Alembic hasta `20261126_02` antes de ejecutar API 1.1.
