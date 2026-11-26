@@ -5,8 +5,9 @@
 1. **Unitarias/integración de API:** pytest + TestClient + SQLAlchemy y SQLite temporal; se ejecutan en `backend/tests/test_business.py`.
 2. **Integración PostgreSQL:** job CI `backend-tests` migra un servicio PostgreSQL 17 con Alembic y ejecuta el conjunto de tests (incluidos los tests existentes de salud).
 3. **Frontend:** job CI `frontend-build` realiza `npm ci` y `npm run build` (TypeScript + Vite).
-4. **MVP de referencia:** suite independiente en `demo_funcional/tests`, para no confundir dos aplicaciones.
-5. **Pruebas de negocio en establecimiento:** requieren ejecución y aceptación de representante; NO están acreditadas aquí.
+4. **Instalación desde cero:** workflow `first-run-smoke.yml` genera credenciales locales, construye contenedores, ejecuta migraciones y recorre API real con datos ficticios.
+5. **Recorrido visual:** `e2e-ui-evidence.yml` automatiza Chromium contra React y PostgreSQL para producir capturas verificables.
+6. **Pruebas de negocio en establecimiento:** requieren ejecución y aceptación de representante; NO están acreditadas aquí.
 
 ## Cobertura funcional
 
