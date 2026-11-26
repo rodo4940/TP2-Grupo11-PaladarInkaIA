@@ -1,119 +1,73 @@
-# Paladar Inka AI
+# Paladar Inka AI — gestión integral de pizzería
 
-## Descripcion
+Sistema académico de ingeniería de software desarrollado para **El Paladar del Inka**, Taller de Proyectos 2, Universidad Continental (2026-II).
 
-Sistema inteligente basado en IA para la gestion de ventas, inventario y atencion al cliente en la pizzeria El Paladar del Inka.
+**Tecnologías:** React 19 + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 17 · SQLAlchemy y Alembic · Docker Compose · GitHub Actions.
 
-TASK-001 contiene solo el bootstrap tecnico: backend, frontend, base de datos, Docker, pruebas y documentacion inicial. No incluye modulos funcionales de negocio.
+## Ejecutar después de descargar GitHub
 
-## Arquitectura
+No necesitas instalar Node, Python o PostgreSQL localmente. Solo **Docker Desktop/Engine + Docker Compose v2**.
 
-El proyecto usa un monolito modular:
+**En Windows:** abre Docker Desktop y haz doble clic en **`INICIAR_WINDOWS.bat`**.
 
-- `backend/`: API central con FastAPI y reglas de negocio futuras.
-- `frontend/`: cliente React con TypeScript.
-- `db`: PostgreSQL como fuente de verdad operativa.
-
-## Tecnologias
-
-- Python 3.12
-- FastAPI
-- SQLAlchemy 2.x
-- Alembic
-- Pydantic v2 y pydantic-settings
-- PostgreSQL 17
-- Pytest
-- Node.js 22
-- React
-- TypeScript
-- Vite
-- Docker y Docker Compose
-
-## Requisitos
-
-- Git
-- Docker Desktop
-- Docker Compose v2
-
-## Configuracion
-
-1. Clonar el repositorio.
-2. Copiar `.env.example` a `.env`.
-3. Revisar los valores locales de `.env`.
-4. Iniciar Docker.
-
+**En Linux, macOS o WSL:**
 ```bash
-cp .env.example .env
+bash scripts/start.sh
 ```
 
-En Windows PowerShell:
+El instalador crea **`.env` con secretos locales aleatorios**, inicia PostgreSQL + API + React, aplica migraciones y crea datos de prueba sin duplicados. Luego abre:
 
-```powershell
-Copy-Item .env.example .env
-```
+| Acceso | URL |
+|---|---|
+| Aplicación React | http://localhost:5173 |
+| API Swagger (solo demo) | http://localhost:8000/docs |
+| Comprobación API | http://localhost:8000/api/v1/ready |
 
-## Ejecucion
+Usuarios de demostración: `admin`, `cajero` y `cocina`. Lee el valor **`SEED_ADMIN_PASSWORD` de tu `.env` local** para la contraseña. Es una demo con insumos y pedidos ficticios, no un despliegue empresarial.
 
-```bash
-docker compose up --build
-```
+**[Manual de instalación paso a paso y solución de errores](docs/INSTALACION_LOCAL.md)** · [Operación comercial y despliegue seguro](deploy/OPERACIONES.md)
 
-## URLs
+> **Rama GitHub:** mientras [el PR #11](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/11) espera la revisión requerida para entrar en `main`, descarga la rama `feature/mvp-demostrable-qa-20261126` desde el selector de ramas. Descargar `main` antes de la fusión no garantiza encontrar este código.
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
-- Swagger: http://localhost:8000/docs
-- Health: http://localhost:8000/api/v1/health
-- Ready: http://localhost:8000/api/v1/ready
+## Módulos operativos
 
-## Pruebas backend
+| Área | Funcionalidades implementadas |
+|---|---|
+| Autenticación | JWT, Argon2, roles administrador/caja/cocina, revocación de sesiones tras cambio de clave |
+| Productos | Catálogo, precios, activación/desactivación, recetas por ingrediente |
+| Ventas y POS | Crear pedidos, calcular total en servidor, controlar stock, cobro único por pedido |
+| Cocina | Comandas y estados pendiente → preparando → listo → entregado |
+| Inventario | Existencias, mínimos, ajustes, consumo por receta y Kardex trazable |
+| Clientes | Registro, historial y totales de compras confirmadas |
+| Reportes | Ingresos confirmados por medio de pago y ranking de productos |
+| Inteligencia operativa | Recomendaciones heurísticas y previsión descriptiva de demanda con límites explícitos |
+| Seguridad y auditoría | Roles RBAC y bitácora de cambios críticos |
 
-```bash
-docker compose exec backend pytest -v
-```
+**Importante:** el ticket generado es exclusivamente **interno**, no una boleta o factura electrónica de SUNAT. El módulo de inteligencia todavía no usa modelos ML entrenados con histórico real.
 
-Tambien puede ejecutarse localmente desde `backend/` si las dependencias estan instaladas:
-
-```bash
-pytest -v
-```
-
-## Migraciones
-
-Desde `backend/`:
+## Ejecutar controles y detener
 
 ```bash
-alembic revision --autogenerate -m "descripcion"
-alembic upgrade head
-```
-
-Alembic toma la URL de base de datos desde las mismas variables usadas por la aplicacion.
-
-## Detener proyecto
-
-Detener contenedores conservando volumenes:
-
-```bash
+bash scripts/verify.sh
+# Detener y conservar los datos
 docker compose down
+# Borrado explícito de datos ficticios, con confirmación
+bash scripts/reset-demo.sh
 ```
 
-Detener contenedores y eliminar volumenes, incluyendo datos locales de PostgreSQL:
+CI integra pruebas backend sobre PostgreSQL, compilación React, una prueba de instalación desde cero con Docker y recorridos de navegador con capturas.
 
-```bash
-docker compose down -v
-```
+## Despliegue real y seguridad
 
-## Estructura
+`docker-compose.prod.yml` y `deploy/Caddyfile` son una **plantilla de despliegue**, no autorización automática para operar con clientes ni cobrar pagos. Para producción deben verificarse seguridad, TLS, backups recuperables, auditoría, privacidad, UAT real y proceso tributario aplicable.
 
-- `backend/app/api`: rutas HTTP versionadas.
-- `backend/app/core`: configuracion central.
-- `backend/app/db`: conexion y utilidades de base de datos.
-- `backend/alembic`: migraciones.
-- `backend/tests`: pruebas automatizadas.
-- `frontend/src`: aplicacion React.
-- `docs`: documentacion futura del proyecto.
-- `scripts`: scripts futuros de apoyo.
+- [Checklist **go / no-go**](docs/RELEASE_READINESS.md)
+- [Runbook de producción](deploy/OPERACIONES.md)
+- [Arquitectura técnica](docs/ARQUITECTURA.md)
+- [Pruebas y evidencias](docs/PLAN_QA.md)
+- [Manual de usuario](docs/MANUAL_USUARIO.md)
+- [Cobertura visual de pantallas](docs/UI_REFERENCIAS_Y_ESTADO.md)
 
-## Seguridad
+**Autores:** Jamil Shandee Hinojosa Ttito · Jose Paolo Champi Palacios · Rodolfo Muñoz Cruz · Erik Alexander Callañaupa Quispe.
 
-No subir `.env`, claves, tokens, passwords reales ni datos personales. Los valores de `.env.example` son placeholders para desarrollo local.
+**Docente:** Ing. Néstor Gutiérrez Huamán.

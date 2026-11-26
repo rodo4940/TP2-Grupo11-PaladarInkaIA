@@ -1,0 +1,66 @@
+name: Fullstack Quality (FastAPI + React)
+on:
+  push:
+    branches:
+      - feature/mvp-demostrable-qa-20261126
+      - main
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/fullstack-ci.yml"
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: paladar_inka_test
+          POSTGRES_USER: paladar_user
+          POSTGRES_PASSWORD: temporary_ci_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U paladar_user -d paladar_inka_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DEBUG: "false"
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: paladar_inka_test
+      DATABASE_USER: paladar_user
+      DATABASE_PASSWORD: temporary_ci_password
+      JWT_SECRET: integration-ci-only-secret-not-for-production-2026
+      CORS_ORIGINS: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install ".[test]"
+      - name: Validate migration on PostgreSQL
+        working-directory: backend
+        run: alembic upgrade head
+      - name: Test HTTP + domain + database health
+        working-directory: backend
+        run: pytest -q --junitxml=results-backend.xml
+      - name: Store backend test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: {name: test-evidence-backend, path: backend/results-backend.xml}
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22", cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Typecheck and production build
+        working-directory: frontend
+        run: npm run build
