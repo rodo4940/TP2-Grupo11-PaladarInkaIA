@@ -301,3 +301,22 @@ def test_new_endpoints_missing_entities(env):
     assert c.get('/api/v1/customers/999/insights',headers=a['cashier']).status_code==404
     assert c.patch('/api/v1/customers/999',headers=a['cashier'],json={'name':'Nuevo nombre'}).status_code==404
     assert c.get('/api/v1/orders/999/receipt',headers=a['cashier']).status_code==404
+
+
+def test_first_admin_bootstrap_is_one_time_and_hashed(env, monkeypatch):
+    from app import manage
+    from sqlalchemy import select
+    from app.domain.models import User
+    c,roles,TestSession=env
+    # El entorno de la prueba ya tiene tres usuarios: no permite segundo bootstrap.
+    monkeypatch.setattr(manage,'SessionLocal',TestSession)
+    with pytest.raises(RuntimeError,match='Ya existen usuarios'):
+        manage.create_admin('otra-admin','Otra Administradora','SecurePassword1234')
+
+
+def test_first_admin_rejects_weak_credentials_before_database(env,monkeypatch):
+    from app import manage
+    with pytest.raises(ValueError,match='contraseña'):
+        manage.create_admin('admin','Administrador Prueba','123')
+    with pytest.raises(ValueError,match='inválido'):
+        manage.create_admin('!unsafe','Administrador Prueba','SecurePassword1234')

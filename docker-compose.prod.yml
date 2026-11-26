@@ -46,7 +46,7 @@ services:
   frontend:
     build: {context: ./frontend, dockerfile: Dockerfile.prod}
     restart: unless-stopped
-    expose: ["80"]
+    expose: ["8080"]
     security_opt: ["no-new-privileges:true"]
   edge:
     image: caddy:2
