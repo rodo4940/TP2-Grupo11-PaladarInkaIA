@@ -1,0 +1,31 @@
+name: Release Image and Configuration Verification
+on:
+  push:
+    branches: [feature/mvp-demostrable-qa-20261126]
+    paths:
+      - "backend/Dockerfile.prod"
+      - "backend/app/**"
+      - "frontend/Dockerfile.prod"
+      - "frontend/deploy/**"
+      - "frontend/src/**"
+      - "docker-compose.prod.yml"
+      - "deploy/Caddyfile"
+      - ".github/workflows/release-build.yml"
+  workflow_dispatch:
+jobs:
+  image-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production-compose structure (no deployment)
+        run: |
+          cp .env.production.example .env.production
+          docker compose --env-file .env.production -f docker-compose.prod.yml config -q
+      - name: Build hardened FastAPI runtime image
+        run: docker build -f backend/Dockerfile.prod -t paladar/backend:ci backend
+      - name: Build static React runtime image
+        run: docker build -f frontend/Dockerfile.prod -t paladar/frontend:ci frontend
+      - name: Verify nonroot backend and web images metadata
+        run: |
+          docker image inspect paladar/backend:ci --format '{{.Config.User}}' | grep -q '10001:10001'
+          docker image inspect paladar/frontend:ci --format '{{.Config.User}}' | grep -Eq 'nginx|101'

@@ -11,7 +11,7 @@
 3. `docker compose --env-file .env.production -f docker-compose.prod.yml build`
 4. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d db`
 5. `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend alembic upgrade head`
-6. Crear el primer usuario administrador mediante procedimiento autorizado, sin sembrar usuarios de demo en producción.
+6. Crear el primer usuario administrador (solo una vez, por consola interactiva): `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend python -m app.manage create-admin --username admin --name "Responsable autorizado"`. La contraseña se solicita sin eco y no queda en Git.
 7. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d`
 8. Verificar HTTPS, `GET /api/v1/health`, autenticación y compra de prueba; no utilizar datos personales reales hasta tener aprobación.
 

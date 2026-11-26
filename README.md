@@ -4,7 +4,7 @@ Proyecto académico de Ingeniería de Sistemas e Informática, Universidad Conti
 
 ## Estado real
 
-Esta rama integra el **frontend React** con una **API FastAPI** que persiste en **PostgreSQL 17**, con 36+ pruebas de integración de negocio, CI, control de roles y migraciones Alembic. La aplicación no representa un despliegue empresarial autorizado ni una aprobación firmada por la pizzería. Se debe completar UAT con usuarios reales, revisión de seguridad y un plan de operaciones antes de un uso productivo.
+Esta rama integra el **frontend React** con una **API FastAPI** que persiste en **PostgreSQL 17**, con pruebas de integración de negocio, CI, control de roles y migraciones Alembic. La aplicación no representa un despliegue empresarial autorizado ni una aprobación firmada por la pizzería. Se debe completar UAT con usuarios reales, revisión de seguridad y un plan de operaciones antes de un uso productivo.
 
 El módulo de recomendaciones utiliza reglas explicables y proyecciones descriptivas; **no se afirma que exista un modelo de machine learning entrenado** sin conjunto de datos de ventas suficiente.
 
@@ -28,7 +28,7 @@ El módulo de recomendaciones utiliza reglas explicables y proyecciones descript
 1. Copia variables: `cp .env.example .env` (PowerShell: `Copy-Item .env.example .env`).
 2. Cambia **DATABASE_PASSWORD**, **JWT_SECRET** (mínimo 32 caracteres aleatorios) y **SEED_ADMIN_PASSWORD** (mínimo 12 caracteres). Nunca publiques `.env`.
 3. Levanta el stack: `docker compose up --build -d`.
-4. Inicializa **solo datos ficticios de demostración**: `docker compose exec backend python -m app.seed`. Esta semilla está prohibida en `APP_ENV=production` y es idempotente.
+4. Aplica las migraciones: `docker compose exec backend alembic upgrade head`. Después inicializa **solo datos ficticios de demostración**: `docker compose exec backend python -m app.seed`. Esta semilla está prohibida en `APP_ENV=production` y es idempotente.
 5. Abre `http://localhost:5173` e ingresa con cuentas demo `admin`, `cajero` o `cocina`, todas con la contraseña **que tú configuraste en .env**.
 6. Swagger: `http://localhost:8000/docs`. Health: `http://localhost:8000/api/v1/health`.
 
@@ -65,6 +65,14 @@ En el PR revisa los jobs `Fullstack Quality` (pruebas y migración Postgres / bu
 ## Limitaciones antes de producción
 
 No incluye integración con SUNAT, pasarelas de pago reales, protección avanzada contra fuerza bruta, restablecimiento de contraseña seguro, versionado de recetas frente a cambios históricos de catálogo ni una política completa de backups y retención. El frontend utiliza sessionStorage para tokens y debe cambiarse a sesiones HttpOnly seguras en un despliegue público. Revisar OWASP ASVS y requerimientos legales de datos personales antes de producción.
+
+## Preparación de despliegue (no es autorización productiva)
+
+- [Plantilla Docker + Caddy/HTTPS](docker-compose.prod.yml) y [operaciones de infraestructura](deploy/OPERACIONES.md).
+- [Matriz de 20 referencias visuales y brechas reales](docs/UI_REFERENCIAS_Y_ESTADO.md).
+- [Checklist go/no-go y bloqueos normativos](docs/RELEASE_READINESS.md).
+- Los comprobantes de venta implementados son **tickets internos no tributarios**: su impresión no satisface obligaciones de emisión SUNAT.
+- Para usuarios reales, hace falta consentimiento y UAT. El código de CI utiliza exclusivamente datos ficticios.
 
 ## Documentación
 
