@@ -253,3 +253,26 @@ tbody td .tag{font-size:10px}
  .module-heading h1,.module-heading p{color:#000!important}
  .panel,.tile{box-shadow:none;break-inside:avoid}
 }
+
+/* Corrección crítica detectada en captura real a 320/414 px:
+   la regla base .two-col:has(.stack-form) tenía mayor especificidad que el
+   media query simple y mantenía dos columnas estrechas en Inventario. */
+@media(max-width:700px){
+ .content .two-col,
+ .content .two-col:has(.stack-form),
+ .content .dashboard-insights{
+   grid-template-columns:minmax(0,1fr)!important;
+   min-width:0;
+ }
+ .content .two-col > *,
+ .content .two-col > .panel,
+ .content .table-wrap,
+ .content .stack-form{
+   min-width:0;
+   max-width:100%;
+ }
+ .content .two-col .table-wrap{
+   overflow-x:auto;
+   overscroll-behavior-x:contain;
+ }
+}
