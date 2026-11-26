@@ -44,7 +44,7 @@ def capture(page,slug,description):
     global num
     num+=1
     name=f'{num:03d}_{slug}.png'
-    page.screenshot(path=str(OUT/name),animations='disabled',full_page=True)
+    page.screenshot(path=str(OUT/name),animations='disabled',full_page=not slug.endswith('_ayuda_v3'))
     data['screenshots'].append({
         'file':name,
         'step':description,
