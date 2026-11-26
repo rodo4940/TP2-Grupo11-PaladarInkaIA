@@ -1,5 +1,12 @@
 > **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
 
+## Rediseño premium (rama de revisión)
+
+En `feature/premium-ui-100-evidencias` se añadió un sistema visual premium y responsive, fotografías **referenciales** de pizzas en POS y catálogo, login/dashboard con fotografía y una suite Playwright ampliada de **90 a 100 capturas de navegador**. **100 capturas previstas no significa 100 capturas verificadas:** revisar el estado de GitHub Actions y descargar el artefacto original del job verde. La rama `release/paladar-inka-v1-piloto` queda como referencia estable anterior.
+
+- [Decisiones de diseño, licencia de fotografías y matriz QA 91–100](docs/REDISENO_PREMIUM_EVIDENCIAS_100.md)
+- [Workflow que produce el ZIP de evidencias reales](.github/workflows/e2e-full-coverage.yml)
+
 # Paladar Inka AI — gestión integral de pizzería
 
 Sistema académico de ingeniería de software desarrollado para **El Paladar del Inka**, Taller de Proyectos 2, Universidad Continental (2026-II).
