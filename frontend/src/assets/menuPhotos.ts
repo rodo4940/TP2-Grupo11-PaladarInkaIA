@@ -14,7 +14,10 @@ const PHOTO_IDS:Record<string,string>={
  'PIZ-VEG':'photo-1513104890138-7c749659a591',
 };
 export const HERO_PHOTO=cdn('photo-1574071318508-1cdbab80d002',1600);
-export const productImage=(product:Pick<Product,'sku'>)=>{
- const id=PHOTO_IDS[product.sku.trim().toUpperCase()];
+export const productImage=(product:Pick<Product,'sku'|'category'>)=>{
+ // Nuevos productos de la categoría Pizzas reciben solo una foto genérica REFERENCIAL.
+ // Nunca se asigna automáticamente una pizza a bebidas, postres o insumos.
+ const sku=product.sku.trim().toUpperCase();
+ const id=PHOTO_IDS[sku] ?? (product.category.toLowerCase().includes('pizza')?'photo-1565299624946-b28f40a0ae38':null);
  return id?cdn(id):null;
 };
