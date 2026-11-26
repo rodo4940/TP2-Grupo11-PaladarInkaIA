@@ -13,6 +13,7 @@ password=os.environ['SEED_ADMIN_PASSWORD']
 axe=Path('frontend/node_modules/axe-core/axe.min.js')
 if not axe.exists():raise SystemExit('Falta axe-core. Instalar en CI con npm install --no-save axe-core --prefix frontend')
 out=Path('e2e/evidencias')
+out.mkdir(parents=True,exist_ok=True)
 report={'scope':'Axe-core en Chromium contra React/FastAPI/PostgreSQL de QA. NO certificación WCAG 2.1 AA','timestamp_utc':datetime.now(timezone.utc).isoformat(),'pages':[]}
 with sync_playwright() as p:
     b=p.chromium.launch(channel='chrome',headless=True,args=['--no-sandbox'])
