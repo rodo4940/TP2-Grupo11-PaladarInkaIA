@@ -204,3 +204,16 @@ kbd{display:inline-block;border:1px solid #d7d6cb;border-bottom-width:3px;border
 @media(prefers-reduced-motion:reduce){
  .tile:hover,.product-card:hover,.operations-next button:hover{transform:none}
 }
+
+/* Acceso directo al carrito: visible solo en tabletas y móviles */
+.jump-cart{display:none;align-items:center;justify-content:center;gap:10px;background:#284d3a;color:#fff;border:1px solid #284d3a;border-radius:11px;min-height:44px;padding:11px 15px;font-size:12px;font-weight:800;white-space:nowrap}
+.jump-cart:hover{background:#1a3b2c}
+#order-cart{scroll-margin-top:95px}
+@media(max-width:1250px){
+ .jump-cart{display:inline-flex}
+}
+@media(max-width:650px){
+ .catalog-tools{align-items:stretch}
+ .jump-cart{width:100%}
+ .product-card .food-top{font-size:7px}
+}
