@@ -45,7 +45,7 @@ const icons:Record<View,ReactNode>={
 };
 function NavGlyph({id}:{id:View}){return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icons[id]}</svg>}
 function Field({title,children}:{title:string;children:ReactNode}){return <label className="field"><span>{title}</span>{children}</label>}
-function Empty({text}:{text:string}){return <div className="empty empty-designed" role="status"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true" fill="none"><rect x="9" y="19" width="50" height="38" rx="12" fill="#f1e8d8"/><path d="M19 26h30v22H19z" fill="#faf5e9" stroke="#ceb38b" strokeWidth="2"/><path d="M27 34h14M27 41h9" stroke="#b18e65" strokeWidth="3" strokeLinecap="round"/><circle cx="49" cy="18" r="10" fill="#dfebdc"/><path d="m45 18 3 3 6-7" stroke="#4b8766" strokeWidth="2.5" strokeLinecap="round"/></svg><p>{text}</p></div>
+function Empty({text}:{text:string}){return <div className="empty empty-designed" role="status"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true" fill="none"><rect x="9" y="19" width="50" height="38" rx="12" fill="#f1e8d8"/><path d="M19 26h30v22H19z" fill="#faf5e9" stroke="#ceb38b" strokeWidth="2"/><path d="M27 34h14M27 41h9" stroke="#b18e65" strokeWidth="3" strokeLinecap="round"/><circle cx="49" cy="18" r="10" fill="#dfebdc"/><path d="m45 18 3 3 6-7" stroke="#4b8766" strokeWidth="2.5" strokeLinecap="round"/></svg><p>{text}</p></div>}
 function StateTag({status}:{status:OrderStatus}){return <span className={`tag tag-${status}`}>{labels[status]}</span>}
 function FoodPhoto({product,small=false}:{product:Product;small?:boolean}){
  const src=productImage(product);
