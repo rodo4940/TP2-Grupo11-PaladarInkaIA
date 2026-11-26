@@ -221,3 +221,12 @@ kbd{display:inline-block;border:1px solid #d7d6cb;border-bottom-width:3px;border
 /* El enlace de salto solo aparece al navegar con teclado, nunca por enfoque programático. */
 .skip-link:focus:not(:focus-visible){top:-120px!important}
 .skip-link:focus-visible{top:14px!important}
+
+/* Correcciones basadas en resultados reales de axe-core: contraste mínimo 4.5:1 para texto pequeño. */
+.breadcrumb{color:#526458!important}
+.page-title p{color:#536558!important}
+.operations-ring-info>small{color:#526459!important}
+.operations-next button small{color:#53675a!important}
+.product-label{color:#775034!important}
+.operations-heading p{color:#54675b!important}
+.operations-ring-info>p{color:#526658!important}
