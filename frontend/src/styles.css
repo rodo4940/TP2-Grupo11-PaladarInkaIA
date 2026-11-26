@@ -49,3 +49,4 @@ body{margin:0;min-width:320px}button,input,select,textarea{font:inherit}button{c
 .text-action{color:#a6222b}.tag{font-weight:850}
 .strong,td code{color:#6b3323}.table-toolbar input::placeholder{color:#6b788a}
 .login-card .login-note,.login-card>p{color:#53657b}
+.health-grid small{color:#53657b}
