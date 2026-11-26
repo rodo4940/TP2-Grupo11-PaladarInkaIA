@@ -234,3 +234,5 @@ kbd{display:inline-block;border:1px solid #d7d6cb;border-bottom-width:3px;border
 /* Los productos exhiben un recurso local desde el primer fotograma mientras llega la fotografía externa. */
 .photo-illustration{background:#7c5038 url('/illustrations/pizza-artisan.svg') center/cover no-repeat}
 .photo-illustration svg{display:none}
+
+.login-hero-photo,.banner-photo{background:#7c5038 url('/illustrations/pizza-artisan.svg') center/cover no-repeat}
