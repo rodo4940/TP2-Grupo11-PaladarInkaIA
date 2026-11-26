@@ -1,13 +1,13 @@
 > **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
 
-## Actualización premium v3 (revisión en curso)
+## Experiencia premium v3 — validada para piloto técnico
 
-La mejora [PR #14](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/14) incorpora centro de operaciones con información real, estado de sincronización verídico, ayuda contextual accesible, navegación por roles, acceso directo al carrito móvil y retoques responsive de interfaz. La nueva matriz de evidencias añade **52 capturas** (360, 390, 768 y 1440 px; login, 11 módulos y ayuda) a las 100 anteriores, para un total esperado de **152 PNG**. Su aceptación requiere un workflow verde del commit final: nunca considerar suficiente el conteo nominal sin el manifiesto.
+La mejora [PR #14 (fusionado)](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/14) está integrada en esta rama de entrega. Incluye centro de operaciones con datos del servidor, sincronización verificable, ayuda accesible y navegación por roles, carrito móvil, fotografías referenciales con ilustración local de respaldo y diseño responsive. La [ejecución E2E aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45897585108) generó **152 PNG auténticos**: 100 escenarios previos más 52 capturas en pantallas de 360, 390, 768 y 1440 px (login, 11 módulos y centro de ayuda), con galería, manifiesto SHA-256, 27/27 controles HTTP, cero errores JavaScript y cero desbordamientos horizontales detectados. También aprobaron Fullstack Quality, Fresh Clone Docker y Security and Accessibility QA (axe-core automatizado preliminar).
 
 - [Decisiones UI/UX y matriz de 152 evidencias](docs/EXPERIENCIA_PREMIUM_V3_RESPONSIVE.md)
 - [Galería, SHA-256 y controles de pantalla del workflow](.github/workflows/e2e-full-coverage.yml)
 
-## Interfaz premium verificada — rama de entrega del piloto
+## Antecedente: interfaz premium v2 y sus primeras 100 evidencias
 
 La rama `release/paladar-inka-v1-piloto` incorpora el rediseño visual premium y responsive, fotografías **referenciales** de pizzas en POS y catálogo, login/dashboard con fotografía y la suite Playwright ampliada a **100 capturas reales de navegador**. La [ejecución E2E final aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45892814169) aporta el artefacto `paladar-full-ui-evidence` con 100 PNG, galería HTML, SHA256 y los 27 controles HTTP con cero errores. Las fotografías son ilustrativas y deben sustituirse por recursos propios aprobados antes del uso comercial.
 
