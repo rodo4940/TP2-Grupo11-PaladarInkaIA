@@ -37,7 +37,14 @@ jobs:
           docker compose --env-file .env.production -f docker-compose.prod.yml up -d db
           docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend alembic upgrade head
           docker compose --env-file .env.production -f docker-compose.prod.yml up -d backend frontend
-          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health',timeout=10).read().decode())"
+          for attempt in $(seq 1 40); do
+            if docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health',timeout=3).read().decode())"; then
+              echo "Production container backend passed HTTP health check"
+              break
+            fi
+            if [ "$attempt" -eq 40 ]; then echo "Backend did not become ready" >&2; exit 1; fi
+            sleep 2
+          done
           docker compose --env-file .env.production -f docker-compose.prod.yml exec -T frontend sh -ec "wget -qO- http://127.0.0.1:8080/ | grep -q 'Paladar'"
       - name: Show service diagnostics if verification fails
         if: failure()
