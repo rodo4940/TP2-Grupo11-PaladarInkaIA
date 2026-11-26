@@ -29,3 +29,19 @@ jobs:
         run: |
           docker image inspect paladar/backend:ci --format '{{.Config.User}}' | grep -q '10001:10001'
           docker image inspect paladar/frontend:ci --format '{{.Config.User}}' | grep -Eq 'nginx|101'
+      - name: Exercise production images against temporary PostgreSQL
+        run: |
+          sed -i 's/^PALADAR_DOMAIN=.*/PALADAR_DOMAIN=paladar.localhost/' .env.production
+          sed -i 's/^DATABASE_PASSWORD=.*/DATABASE_PASSWORD=ci_only_db_password_not_for_production_2026/' .env.production
+          sed -i 's/^JWT_SECRET=.*/JWT_SECRET=ci_only_explicitly_nonproduction_secret_2026_11_26/' .env.production
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d db
+          docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend alembic upgrade head
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d backend frontend
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health',timeout=10).read().decode())"
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T frontend sh -ec "wget -qO- http://127.0.0.1:8080/ | grep -q 'Paladar'"
+      - name: Show service diagnostics if verification fails
+        if: failure()
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=60 || true
+      - name: Remove temporary containers and their test volumes
+        if: always()
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml down --volumes || true
