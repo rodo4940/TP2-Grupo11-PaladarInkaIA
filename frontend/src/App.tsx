@@ -144,6 +144,14 @@ function App(){
    window.addEventListener('keydown',onKey);
    return ()=>window.removeEventListener('keydown',onKey);
  },[session]);
+ useEffect(()=>{
+  if(!session)return;
+  const frame=requestAnimationFrame(()=>{
+   document.getElementById('main-content')?.focus({preventScroll:true});
+   window.scrollTo({top:0,behavior:'auto'});
+  });
+  return ()=>cancelAnimationFrame(frame);
+ },[session?.user.id]);
  const perform=async(fn:()=>Promise<unknown>, message:string, after?:()=>void)=>{
   setLoading(true);
   try{await fn();after?.();notify(message);await refresh()}catch(e){notify(e instanceof Error?e.message:'Error al procesar','error')}finally{setLoading(false)}
