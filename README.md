@@ -1,8 +1,8 @@
 > **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
 
-## Rediseño premium (rama de revisión)
+## Interfaz premium verificada — rama de entrega del piloto
 
-En `feature/premium-ui-100-evidencias` se añadió un sistema visual premium y responsive, fotografías **referenciales** de pizzas en POS y catálogo, login/dashboard con fotografía y una suite Playwright ampliada de **90 a 100 capturas de navegador**. **100 capturas previstas no significa 100 capturas verificadas:** revisar el estado de GitHub Actions y descargar el artefacto original del job verde. La rama `release/paladar-inka-v1-piloto` queda como referencia estable anterior.
+La rama `release/paladar-inka-v1-piloto` incorpora el rediseño visual premium y responsive, fotografías **referenciales** de pizzas en POS y catálogo, login/dashboard con fotografía y la suite Playwright ampliada a **100 capturas reales de navegador**. La [ejecución E2E final aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45892814169) aporta el artefacto `paladar-full-ui-evidence` con 100 PNG, galería HTML, SHA256 y los 27 controles HTTP con cero errores. Las fotografías son ilustrativas y deben sustituirse por recursos propios aprobados antes del uso comercial.
 
 - [Decisiones de diseño, licencia de fotografías y matriz QA 91–100](docs/REDISENO_PREMIUM_EVIDENCIAS_100.md)
 - [Workflow que produce el ZIP de evidencias reales](.github/workflows/e2e-full-coverage.yml)
