@@ -320,3 +320,32 @@ def test_first_admin_rejects_weak_credentials_before_database(env,monkeypatch):
         manage.create_admin('admin','Administrador Prueba','123')
     with pytest.raises(ValueError,match='inválido'):
         manage.create_admin('!unsafe','Administrador Prueba','SecurePassword1234')
+
+
+def test_password_change_revokes_old_token_and_old_password(env):
+    c,roles,_=env
+    old=roles['cashier']
+    changed=c.post('/api/v1/auth/change-password',headers=old,json={'current_password':'PasswordSecure123','new_password':'NewSecurePassword2026!'})
+    assert changed.status_code==200,changed.text
+    assert c.get('/api/v1/auth/me',headers=old).status_code==401
+    assert c.post('/api/v1/auth/token',json={'username':'cajero','password':'PasswordSecure123'}).status_code==401
+    new=c.post('/api/v1/auth/token',json={'username':'cajero','password':'NewSecurePassword2026!'})
+    assert new.status_code==200 and new.json()['user']['username']=='cajero'
+
+
+def test_change_password_rejects_wrong_original(env):
+    c,roles,_=env
+    wrong=c.post('/api/v1/auth/change-password',headers=roles['cashier'],json={'current_password':'WrongPassword','new_password':'AnotherSecure1234!'})
+    assert wrong.status_code==401
+    still=c.get('/api/v1/auth/me',headers=roles['cashier'])
+    assert still.status_code==200
+
+
+def test_admin_reset_invalidates_worker_token(env):
+    c,roles,_=env
+    reset=c.post('/api/v1/users/2/reset-password',headers=roles['admin'],json={'new_password':'WorkerResetSecure1234!'})
+    assert reset.status_code==200,reset.text
+    assert c.get('/api/v1/auth/me',headers=roles['cashier']).status_code==401
+    assert c.post('/api/v1/auth/token',json={'username':'cajero','password':'WorkerResetSecure1234!'}).status_code==200
+    assert c.post('/api/v1/users/1/reset-password',headers=roles['admin'],json={'new_password':'AdminPasswordSecure1234!'}).status_code==409
+    assert c.post('/api/v1/users/3/reset-password',headers=roles['kitchen'],json={'new_password':'AnotherWorkerPass1234!'}).status_code==403

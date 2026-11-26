@@ -131,6 +131,13 @@ class MovementOut(ORMOut):
     actor_id: int
     created_at: datetime
 
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=12, max_length=128)
+
+class PasswordReset(BaseModel):
+    new_password: str = Field(min_length=12, max_length=128)
+
 class UserCreate(BaseModel):
     username: str = Field(min_length=3,max_length=80,pattern=r'^[a-z][a-z0-9_.-]+$')
     full_name: str = Field(min_length=3,max_length=160)

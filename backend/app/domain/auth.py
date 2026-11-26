@@ -29,7 +29,7 @@ def issue_token(user: User) -> str:
     if not secret or (s.app_env == 'production' and (len(secret) < 32 or secret.startswith('dev-only'))):
         raise RuntimeError('Configure un JWT_SECRET seguro (mínimo 32 caracteres en producción)')
     now = datetime.now(timezone.utc)
-    claims = {'sub': str(user.id), 'iss': 'paladar-inka-api', 'aud': 'paladar-inka-ui', 'iat': now, 'exp': now + timedelta(minutes=s.token_ttl_minutes)}
+    claims = {'sub': str(user.id), 'ver': user.token_version, 'iss': 'paladar-inka-api', 'aud': 'paladar-inka-ui', 'iat': now, 'exp': now + timedelta(minutes=s.token_ttl_minutes)}
     return jwt.encode(claims, secret, algorithm='HS256')
 
 def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(_bearer), db: Session = Depends(get_db)) -> User:
@@ -43,6 +43,8 @@ def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(_bea
     user = db.get(User, uid)
     if user is None or not user.active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Cuenta no disponible')
+    if payload.get('ver') != user.token_version:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, 'Sesión revocada; vuelve a ingresar')
     return user
 
 def require_roles(*roles: str) -> Callable:

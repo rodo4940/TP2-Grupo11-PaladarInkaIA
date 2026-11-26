@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.domain.auth import current_user, issue_token, require_roles, verify_password
 from app.domain.models import (AuditEvent, Customer, Ingredient, Order, OrderConsumption, OrderItem, Payment, Product, RecipeLine, StockMovement, User)
-from app.domain.schemas import (AdjustStockIn, CustomerIn, CustomerOut, IngredientIn, IngredientOut, LoginIn, MovementOut, OrderIn, OrderOut, PaymentIn, PaymentOut, ProductIn, ProductOut, ProductPatch, CustomerPatch, RecipeIn, StatusIn, TokenOut, UserOut, UserCreate, RoleChange, ActiveChange)
+from app.domain.schemas import (AdjustStockIn, CustomerIn, CustomerOut, IngredientIn, IngredientOut, LoginIn, MovementOut, OrderIn, OrderOut, PaymentIn, PaymentOut, ProductIn, ProductOut, ProductPatch, CustomerPatch, RecipeIn, StatusIn, TokenOut, UserOut, UserCreate, RoleChange, ActiveChange, PasswordChange, PasswordReset)
 
 router = APIRouter()
 admin = require_roles('admin')
@@ -43,6 +43,21 @@ def login(payload: LoginIn, db: Session=Depends(get_db)) -> dict[str, Any]:
 @router.get('/auth/me', response_model=UserOut)
 def me(user: User=Depends(current_user)) -> User:
     return user
+
+@router.post('/auth/change-password')
+def change_password(payload:PasswordChange,db:Session=Depends(get_db),user:User=Depends(current_user)) -> dict[str,str]:
+    """Se exige la contraseña actual y se revocan todos los JWT previos."""
+    from app.domain.auth import hash_password
+    item=db.scalar(select(User).where(User.id==user.id).with_for_update())
+    if item is None or not verify_password(payload.current_password,item.password_hash):
+        raise HTTPException(401,'Contraseña actual incorrecta')
+    if payload.current_password==payload.new_password:
+        raise HTTPException(422,'La contraseña nueva debe ser diferente')
+    item.password_hash=hash_password(payload.new_password)
+    item.token_version+=1
+    log_action(db,item,'user.password.change','user',item.id,'Sesiones anteriores invalidadas')
+    db.commit()
+    return {'status':'changed','message':'Contraseña actualizada; inicia sesión nuevamente'}
 
 @router.get('/products', response_model=list[ProductOut])
 def products(db: Session=Depends(get_db), user: User=Depends(current_user)) -> list[Product]:
@@ -322,6 +337,20 @@ def create_user(payload:UserCreate,db:Session=Depends(get_db),user:User=Depends(
     except IntegrityError:
         db.rollback();raise HTTPException(409,'Nombre de usuario ocupado')
     return u
+
+@router.post('/users/{user_id}/reset-password')
+def reset_user_password(user_id:int,payload:PasswordReset,db:Session=Depends(get_db),actor:User=Depends(admin)) -> dict[str,str]:
+    """Restablecimiento administrativo: el usuario deberá recibir la clave por canal seguro."""
+    from app.domain.auth import hash_password
+    item=db.scalar(select(User).where(User.id==user_id).with_for_update())
+    if item is None:raise not_found('Usuario')
+    if item.id==actor.id:
+        raise HTTPException(409,'Para cambiar tu contraseña usa /auth/change-password')
+    item.password_hash=hash_password(payload.new_password)
+    item.token_version+=1
+    log_action(db,actor,'user.password.reset','user',item.id,'Sesiones anteriores invalidadas')
+    db.commit()
+    return {'status':'reset','message':'Contraseña renovada; entregar acceso por canal seguro'}
 
 @router.patch('/users/{user_id}/role',response_model=UserOut)
 def change_role(user_id:int,payload:RoleChange,db:Session=Depends(get_db),actor:User=Depends(admin)) -> User:
