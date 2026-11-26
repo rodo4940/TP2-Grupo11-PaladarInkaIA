@@ -1,4 +1,4 @@
-import type {Order,OrderStatus} from '../types/domain';
+import type {Order,OrderStatus,Role} from '../types/domain';
 
 /**
  * Panel operativo de lectura: exclusivamente derivado de los pedidos que entrega la API.
@@ -13,7 +13,7 @@ const accents:Record<OrderStatus,string>={
  ready:'var(--ready,#4d9a78)',delivered:'var(--delivered,#285a43)',cancelled:'var(--cancelled,#a7ada7)',
 };
 const states:OrderStatus[]=['pending','preparing','ready','delivered'];
-export function OperationsOverview({orders,onNavigate}:{orders:Order[];onNavigate:(view:NextView)=>void}){
+export function OperationsOverview({orders,role,onNavigate}:{orders:Order[];role:Role;onNavigate:(view:NextView)=>void}){
  const valid=orders.filter(x=>x.status!=='cancelled');
  const total=valid.length;
  const complete=valid.filter(x=>x.status==='delivered').length;
@@ -53,9 +53,9 @@ export function OperationsOverview({orders,onNavigate}:{orders:Order[];onNavigat
     <div className="operations-next">
      <span className="eyebrow">ATENCIÓN INMEDIATA</span>
      <h3>¿Qué sigue ahora?</h3>
-     <button onClick={()=>onNavigate('kitchen')}><span className="action-icon">♨</span><span><b>{pending} por preparar</b><small>Ver comandas de cocina</small></span><span aria-hidden="true">↗</span></button>
+     {(role==='admin'||role==='kitchen')&&<button onClick={()=>onNavigate('kitchen')}><span className="action-icon">♨</span><span><b>{pending} por preparar</b><small>Ver comandas de cocina</small></span><span aria-hidden="true">↗</span></button>}
      <button onClick={()=>onNavigate('orders')}><span className="action-icon">✓</span><span><b>{ready} listos para entregar</b><small>Consultar seguimiento</small></span><span aria-hidden="true">↗</span></button>
-     <button onClick={()=>onNavigate('pos')}><span className="action-icon">S/</span><span><b>{unpaid} por cobrar</b><small>Ir al punto de venta</small></span><span aria-hidden="true">↗</span></button>
+     {(role==='admin'||role==='cashier')&&<button onClick={()=>onNavigate('pos')}><span className="action-icon">S/</span><span><b>{unpaid} por cobrar</b><small>Ir al punto de venta</small></span><span aria-hidden="true">↗</span></button>}
     </div>
    </div>
   </section>;
