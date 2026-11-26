@@ -39,6 +39,7 @@ viewports=[
 num=100
 checks=[]
 errors=[]
+page_errors=[]
 
 def capture(page,slug,description):
     global num
@@ -91,6 +92,7 @@ with sync_playwright() as p:
             device_scale_factor=1,locale='es-PE',reduced_motion='reduce',
         )
         page=context.new_page()
+        page.on('pageerror',lambda error:page_errors.append(str(error)))
         page.set_default_timeout(25000)
         page.goto(BASE,wait_until='domcontentloaded')
         expect(page.get_by_role('heading',name='Bienvenido',exact=True)).to_be_visible()
@@ -144,8 +146,10 @@ MANIFEST.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8
  'captured_states':len(checks),
  'screenshots_total':len(files),
  'overflow_findings':errors,
+ 'browser_runtime_errors':page_errors,
  'checks':checks,
  'notes':'El overflow de tablas internas se permite solo dentro de .table-wrap; el documento raíz no debe desbordarse.',
 },ensure_ascii=False,indent=2),encoding='utf-8')
 assert not errors, f'Hay {len(errors)} pantallas con overflow horizontal: {errors}'
+assert not page_errors, f'Errores JavaScript durante las pruebas: {page_errors}'
 print('MATRIZ RESPONSIVE 4×13 APROBADA. TOTAL 152 EVIDENCIAS REALES.',flush=True)
