@@ -117,3 +117,14 @@ docker compose down -v
 ## Seguridad
 
 No subir `.env`, claves, tokens, passwords reales ni datos personales. Los valores de `.env.example` son placeholders para desarrollo local.
+
+
+## MVP demostrable con evidencias QA (rama de trabajo)
+
+Además del bootstrap técnico descrito arriba, la rama `feature/mvp-demostrable-qa-20261126` incorpora un **MVP de demostración autocontenido**, separado de la aplicación principal React/PostgreSQL. Usa FastAPI, una interfaz web simple, SQLite local y 27 pruebas de integración reproducibles.
+
+- [Guía de ejecución del MVP](demo_funcional/README.md)
+- [Evidencias y límites de validación](demo_funcional/EVIDENCIA_EJECUCION.md)
+- [Pull request de revisión](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/11)
+
+Las 14 capturas del dossier corresponden al **MVP local con datos ficticios**. No significan despliegue de la solución completa ni pruebas de aceptación del restaurante.
