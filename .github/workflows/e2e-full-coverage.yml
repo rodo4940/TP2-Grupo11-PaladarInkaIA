@@ -1,12 +1,13 @@
 name: Extended Full-System UI Evidence
 on:
   push:
-    branches: [release/paladar-inka-v1-piloto, feature/premium-ui-100-evidencias]
+    branches: [release/paladar-inka-v1-piloto, feature/paladar-premium-v3-responsive-release]
     paths:
       - "scripts/e2e_catalogo_permisos.py"
       - "scripts/e2e_browser.py"
       - "scripts/e2e_professional_redesign.py"
       - "scripts/e2e_premium_visual.py"
+      - "scripts/e2e_responsive_matrix.py"
       - "scripts/build_evidence_gallery.py"
       - "scripts/qa_security_smoke.py"
       - "frontend/src/**"
@@ -21,7 +22,7 @@ permissions:
 jobs:
   real-browser-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:17
@@ -85,6 +86,8 @@ jobs:
           PY
       - name: Run Chromium and verify extended UI screenshots
         run: python scripts/e2e_browser.py
+      - name: Capture 52 responsive UX screenshots across four breakpoints
+        run: python scripts/e2e_responsive_matrix.py
       - name: Verify HTTP security controls on running backend
         run: python scripts/qa_security_smoke.py
       - name: Verify screenshot manifest
@@ -94,11 +97,11 @@ jobs:
           folder=pathlib.Path('e2e/evidencias')
           obj=json.loads((folder/'e2e-results.json').read_text())
           pics=list(folder.glob('*.png'))
-          assert len(pics)==100,(len(pics),[p.name for p in pics])
-          assert len(obj['screenshots'])==100
-          assert len({x['file'] for x in obj['screenshots']})==100
+          assert len(pics)==152,(len(pics),[p.name for p in pics])
+          assert len(obj['screenshots'])==152
+          assert len({x['file'] for x in obj['screenshots']})==152
           report=json.loads((folder/'security-smoke-results.json').read_text())
-          assert report['count']>=20 and report['failed']==0,report
+          assert report['count']==27 and report['failed']==0,report
           print('Validated screenshots:',len(pics),'Security controls:',report['count'])
           PY
       - name: Build HTML gallery, SHA256 manifest and auditable report
@@ -107,7 +110,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: paladar-full-ui-evidence
+          name: paladar-v3-responsive-152-evidence
           path: |
             e2e/evidencias/**
             backend-full-e2e.log
