@@ -1,0 +1,1 @@
+"""Prueba de concepto ejecutable y autocontenida para TP2."""
