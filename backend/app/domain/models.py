@@ -82,7 +82,7 @@ class Order(Base):
     items: Mapped[list['OrderItem']] = relationship(back_populates='order', cascade='all, delete-orphan', lazy='selectin')
     payment: Mapped['Payment | None'] = relationship(back_populates='order', uselist=False, lazy='selectin')
     consumptions: Mapped[list['OrderConsumption']] = relationship(back_populates='order', lazy='selectin')
-    customer: Mapped[Customer | None] = relationship(lazy='joined')
+    customer: Mapped[Customer | None] = relationship(lazy='selectin')
     __table_args__ = (CheckConstraint('total_cents >= 0', name='ck_order_total'), CheckConstraint("status IN ('pending','preparing','ready','delivered','cancelled')", name='ck_order_status'))
 
 
