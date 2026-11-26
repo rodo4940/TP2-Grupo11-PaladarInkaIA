@@ -1,7 +1,7 @@
 name: Real UI Screenshots (React + PostgreSQL)
 on:
   push:
-    branches: [main, feature/mvp-demostrable-qa-20261126]
+    branches: [main, feature/mvp-demostrable-qa-20261126, release/paladar-inka-v1-piloto]
     paths:
       - "scripts/e2e_browser.py"
       - "backend/app/domain/**"
