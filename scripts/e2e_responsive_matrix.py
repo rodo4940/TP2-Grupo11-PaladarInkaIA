@@ -109,6 +109,11 @@ with sync_playwright() as p:
                 expect(page.get_by_role('heading',name='Tu operación de un vistazo')).to_be_visible()
             if key=='pos':
                 expect(page.locator('.product-card').first).to_be_visible()
+                page.wait_for_function("""() => {
+                   const imgs=[...document.querySelectorAll('.product-card img')];
+                   return imgs.length>=4 && imgs.every(img=>img.complete && img.naturalWidth>0);
+                }""",timeout=35000)
+                page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img=>img.decode()))")
                 if width<=1250:
                     expect(page.get_by_role('button',name='Ver carrito (0)')).to_be_visible()
             if key=='products':
