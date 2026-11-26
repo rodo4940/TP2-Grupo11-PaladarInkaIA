@@ -236,3 +236,68 @@ def test_system_info_hides_secrets(env):
     assert c.get('/api/v1/system/info',headers=a['cashier']).status_code==403
     r=c.get('/api/v1/system/info',headers=a['admin'])
     assert r.status_code==200 and 'jwt_secret' not in r.json()
+
+
+def test_admin_can_list_disabled_products_and_cashier_cannot(env):
+    c,a,_=env
+    assert c.patch('/api/v1/products/1',headers=a['admin'],json={'active':False}).status_code==200
+    assert c.get('/api/v1/products',headers=a['cashier']).json()==[]
+    assert len(c.get('/api/v1/products/manage',headers=a['admin']).json())==1
+    assert c.get('/api/v1/products/manage',headers=a['cashier']).status_code==403
+
+
+def test_product_edit_updates_price_without_changing_historical_sale(env):
+    c,a,_=env
+    old=post_order(c,a['cashier']).json()
+    updated=c.patch('/api/v1/products/1',headers=a['admin'],json={'name':'Pizza renovada','price_cents':4900})
+    assert updated.status_code==200,updated.text
+    assert updated.json()['price_cents']==4900
+    assert c.get(f'/api/v1/orders/{old["id"]}',headers=a['cashier']).json()['total_cents']==3200
+
+
+def test_cannot_update_product_with_invalid_fields_or_role(env):
+    c,a,_=env
+    assert c.patch('/api/v1/products/1',headers=a['cashier'],json={'price_cents':2500}).status_code==403
+    assert c.patch('/api/v1/products/1',headers=a['admin'],json={'price_cents':-1}).status_code==422
+    assert c.patch('/api/v1/products/500',headers=a['admin'],json={'price_cents':100}).status_code==404
+
+
+def test_customer_edit_and_insights_payments_only(env):
+    c,a,_=env
+    cus=c.post('/api/v1/customers',headers=a['cashier'],json={'name':'Cliente universitario'}).json()
+    cid=cus['id']
+    patched=c.patch(f'/api/v1/customers/{cid}',headers=a['cashier'],json={'name':'Cliente actualizado','phone':'999123321'})
+    assert patched.status_code==200 and patched.json()['phone']=='999123321'
+    first=c.post('/api/v1/orders',headers=a['cashier'],json={'customer_id':cid,'items':[{'product_id':1,'quantity':1}]}).json()
+    before=c.get(f'/api/v1/customers/{cid}/insights',headers=a['cashier']).json()
+    assert before['orders_total']==1 and before['spent_cents']==0 and before['reference_points']==0
+    assert c.post(f'/api/v1/orders/{first["id"]}/payment',headers=a['cashier'],json={'method':'cash','amount_cents':3200}).status_code==201
+    after=c.get(f'/api/v1/customers/{cid}/insights',headers=a['cashier']).json()
+    assert after['spent_cents']==3200 and after['orders_paid']==1 and after['reference_points']==3
+    assert after['top_products'][0]['name']=='Pizza prueba'
+
+
+def test_kitchen_cannot_read_customer_insights(env):
+    c,a,_=env
+    r=c.get('/api/v1/customers/1/insights',headers=a['kitchen'])
+    assert r.status_code==403
+
+
+def test_receipt_requires_payment_and_is_non_tax(env):
+    c,a,_=env;order=post_order(c,a['cashier']).json()
+    assert c.get(f'/api/v1/orders/{order["id"]}/receipt',headers=a['cashier']).status_code==409
+    assert c.post(f'/api/v1/orders/{order["id"]}/payment',headers=a['cashier'],json={'method':'yape','amount_cents':3200}).status_code==201
+    receipt=c.get(f'/api/v1/orders/{order["id"]}/receipt',headers=a['cashier'])
+    assert receipt.status_code==200,receipt.text
+    data=receipt.json()
+    assert data['type']=='TICKET_INTERNO_NO_TRIBUTARIO'
+    assert data['items'][0]['subtotal_cents']==3200 and data['total_cents']==3200
+    assert 'SUNAT' in data['disclaimer']
+    assert c.get(f'/api/v1/orders/{order["id"]}/receipt',headers=a['kitchen']).status_code==403
+
+
+def test_new_endpoints_missing_entities(env):
+    c,a,_=env
+    assert c.get('/api/v1/customers/999/insights',headers=a['cashier']).status_code==404
+    assert c.patch('/api/v1/customers/999',headers=a['cashier'],json={'name':'Nuevo nombre'}).status_code==404
+    assert c.get('/api/v1/orders/999/receipt',headers=a['cashier']).status_code==404

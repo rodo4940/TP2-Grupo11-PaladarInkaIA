@@ -14,3 +14,6 @@ export interface Recommendation {method:string;items:Array<{product_id:number;na
 export interface Forecast {method:string;type:string;sample_paid_orders_7d:number;limitations:string;items:Array<{product_id:number;name:string;units_by_day:number[];suggested_units_next_day:number;indicative_range:[number,number]}>}
 export interface Audit {id:number;actor_id:number;action:string;entity:string;entity_id:number;detail:string;created_at:string}
 export interface SystemInfo {app:string;version:string;environment:string;database:string;modules:string[]}
+
+export interface CustomerInsights {customer_id:number;orders_total:number;orders_paid:number;spent_cents:number;reference_points:number;top_products:Array<{name:string;quantity:number}>;history:Array<{id:number;created_at:string;status:OrderStatus;paid:boolean;total_cents:number}>;points_disclaimer:string}
+export interface InternalReceipt {type:'TICKET_INTERNO_NO_TRIBUTARIO';order_id:number;issued_at:string;business_label:string;table_label:string;status:string;items:Array<{name:string;quantity:number;unit_price_cents:number;subtotal_cents:number}>;total_cents:number;method:string;disclaimer:string}

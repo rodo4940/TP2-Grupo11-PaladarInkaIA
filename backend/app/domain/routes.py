@@ -4,6 +4,7 @@ Todas las reglas de stock y pago se verifican en servidor y bajo transacción.
 La capa REST no utiliza datos de una interfaz ficticia o un prototipo.
 """
 from collections import Counter, defaultdict
+from datetime import date, timedelta
 from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -13,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.domain.auth import current_user, issue_token, require_roles, verify_password
 from app.domain.models import (AuditEvent, Customer, Ingredient, Order, OrderConsumption, OrderItem, Payment, Product, RecipeLine, StockMovement, User)
-from app.domain.schemas import (AdjustStockIn, CustomerIn, CustomerOut, IngredientIn, IngredientOut, LoginIn, MovementOut, OrderIn, OrderOut, PaymentIn, PaymentOut, ProductIn, ProductOut, RecipeIn, StatusIn, TokenOut, UserOut, UserCreate, RoleChange, ActiveChange)
+from app.domain.schemas import (AdjustStockIn, CustomerIn, CustomerOut, IngredientIn, IngredientOut, LoginIn, MovementOut, OrderIn, OrderOut, PaymentIn, PaymentOut, ProductIn, ProductOut, ProductPatch, CustomerPatch, RecipeIn, StatusIn, TokenOut, UserOut, UserCreate, RoleChange, ActiveChange)
 
 router = APIRouter()
 admin = require_roles('admin')
@@ -46,6 +47,23 @@ def me(user: User=Depends(current_user)) -> User:
 @router.get('/products', response_model=list[ProductOut])
 def products(db: Session=Depends(get_db), user: User=Depends(current_user)) -> list[Product]:
     return list(db.scalars(select(Product).where(Product.active.is_(True)).order_by(Product.id)))
+
+@router.get('/products/manage', response_model=list[ProductOut])
+def manage_products(db: Session=Depends(get_db), user: User=Depends(admin)) -> list[Product]:
+    """Vista del catálogo completo, incluyendo productos desactivados."""
+    return list(db.scalars(select(Product).order_by(Product.id)))
+
+@router.patch('/products/{product_id}', response_model=ProductOut)
+def edit_product(product_id: int, changes: ProductPatch, db: Session=Depends(get_db), user: User=Depends(admin)) -> Product:
+    product=db.get(Product,product_id)
+    if product is None: raise not_found('Producto')
+    fields=changes.model_dump(exclude_unset=True)
+    if not fields or any(value is None for value in fields.values()):
+        raise HTTPException(422,'Se requiere un campo válido para actualizar')
+    for key,value in fields.items():setattr(product,key,value)
+    log_action(db,user,'product.update','product',product.id,','.join(sorted(fields)))
+    db.commit();db.refresh(product)
+    return product
 
 @router.post('/products', response_model=ProductOut, status_code=201)
 def create_product(payload: ProductIn, db: Session=Depends(get_db), user: User=Depends(admin)) -> Product:
@@ -120,6 +138,37 @@ def create_customer(payload:CustomerIn,db:Session=Depends(get_db),user:User=Depe
     log_action(db,user,'customer.create','customer',c.id,c.name)
     db.commit();db.refresh(c)
     return c
+
+@router.patch('/customers/{customer_id}', response_model=CustomerOut)
+def edit_customer(customer_id:int, changes:CustomerPatch,db:Session=Depends(get_db),user:User=Depends(cashier)) -> Customer:
+    customer=db.get(Customer,customer_id)
+    if customer is None:raise not_found('Cliente')
+    fields=changes.model_dump(exclude_unset=True)
+    if not fields or ('name' in fields and fields['name'] is None):
+        raise HTTPException(422,'Actualización de cliente inválida')
+    for key,value in fields.items():setattr(customer,key,value)
+    log_action(db,user,'customer.update','customer',customer.id,','.join(sorted(fields)))
+    db.commit();db.refresh(customer)
+    return customer
+
+@router.get('/customers/{customer_id}/insights')
+def customer_insights(customer_id:int,db:Session=Depends(get_db),user:User=Depends(cashier)) -> dict[str,Any]:
+    customer=db.get(Customer,customer_id)
+    if customer is None:raise not_found('Cliente')
+    orders=list(db.scalars(select(Order).where(Order.customer_id==customer_id).order_by(Order.created_at.desc())))
+    paid=[order for order in orders if order.payment is not None]
+    favorites=Counter()
+    for order in paid:
+        for item in order.items:favorites[item.product_name]+=item.quantity
+    spent=sum(order.payment.amount_cents for order in paid)
+    # Puntos referenciales. No son un saldo canjeable ni un programa comercial aprobado.
+    return {'customer_id':customer_id,'orders_total':len(orders),'orders_paid':len(paid),
+            'spent_cents':spent,'reference_points':spent//1000,
+            'top_products':[{'name':name,'quantity':qty} for name,qty in favorites.most_common(5)],
+            'history':[{'id':order.id,'created_at':order.created_at.isoformat(),
+                        'status':order.status,'paid':order.payment is not None,'total_cents':order.total_cents}
+                       for order in orders[:30]],
+            'points_disclaimer':'Puntos referenciales, sin derecho de canje ni programa de fidelización activo.'}
 
 @router.get('/orders',response_model=list[OrderOut])
 def list_orders(db:Session=Depends(get_db),user:User=Depends(current_user),limit:int=Query(100,ge=1,le=300)) -> list[OrderOut]:
@@ -203,6 +252,21 @@ def pay(order_id:int,payload:PaymentIn,db:Session=Depends(get_db),user:User=Depe
     except IntegrityError:
         db.rollback();raise HTTPException(409,'Pago ya registrado')
     return payment
+
+@router.get('/orders/{order_id}/receipt')
+def internal_receipt(order_id:int,db:Session=Depends(get_db),user:User=Depends(cashier)) -> dict[str,Any]:
+    """Ticket administrativo: NO es boleta/factura electrónica SUNAT."""
+    order=db.get(Order,order_id)
+    if order is None:raise not_found('Pedido')
+    if order.payment is None:raise HTTPException(409,'Ticket disponible tras registrar el pago')
+    return {'type':'TICKET_INTERNO_NO_TRIBUTARIO','order_id':order.id,
+            'issued_at':order.payment.created_at.isoformat(),
+            'business_label':'El Paladar del Inka — demostración',
+            'table_label':order.table_label,'status':order.status,
+            'items':[{'name':i.product_name,'quantity':i.quantity,
+                      'unit_price_cents':i.unit_price_cents,'subtotal_cents':i.unit_price_cents*i.quantity} for i in order.items],
+            'total_cents':order.total_cents,'method':order.payment.method,
+            'disclaimer':'Documento interno de prueba. No válido como boleta o factura tributaria. No fue emitido ante SUNAT.'}
 
 @router.get('/dashboard')
 def dashboard(db:Session=Depends(get_db),user:User=Depends(current_user)) -> dict[str,Any]:

@@ -27,6 +27,12 @@ class ProductIn(BaseModel):
     category: str = Field(default='Pizzas', max_length=80)
     price_cents: int = Field(ge=0, le=99999999)
 
+class ProductPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=140)
+    category: str | None = Field(default=None, min_length=2, max_length=80)
+    price_cents: int | None = Field(default=None, ge=0, le=99999999)
+    active: bool | None = None
+
 class RecipeIn(BaseModel):
     ingredient_id: int = Field(gt=0)
     amount: int = Field(gt=0, le=1000000)
@@ -60,6 +66,11 @@ class AdjustStockIn(BaseModel):
 
 class CustomerIn(BaseModel):
     name: str = Field(min_length=3, max_length=160)
+    phone: str | None = Field(default=None, max_length=32)
+    notes: str | None = Field(default=None, max_length=500)
+
+class CustomerPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=3, max_length=160)
     phone: str | None = Field(default=None, max_length=32)
     notes: str | None = Field(default=None, max_length=500)
 
