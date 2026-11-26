@@ -9,6 +9,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 import json
 import os
+import struct
 
 BASE=os.getenv('E2E_FRONTEND_URL','http://127.0.0.1:5173')
 PASSWORD=os.environ['SEED_ADMIN_PASSWORD']
@@ -56,6 +57,16 @@ def snapshot(page,slug,description):
     count+=1
     filename=f'{count:03d}_{slug}.png'
     page.screenshot(path=str(OUT/filename),full_page=True,animations='disabled')
+    # Playwright puede exportar un PNG más ancho aunque documentElement.scrollWidth
+    # parezca correcto (p. ej., grillas con :has y formularios de Inventario).
+    with (OUT/filename).open('rb') as file:
+      header=file.read(24)
+    assert header[:8]==b'\\x89PNG\\r\\n\\x1a\\n', f'PNG inválido: {filename}'
+    image_width,image_height=struct.unpack('>II',header[16:24])
+    expected_width=page.viewport_size['width']
+    assert image_width==expected_width,(
+      f'Captura desbordada: {filename}, PNG={image_width}px, viewport={expected_width}px'
+    )
     data['screenshots'].append({
       'file':filename,'step':description,
       'source':'Captura Chromium real, React/FastAPI/PostgreSQL; entorno de pruebas con datos ficticios',
