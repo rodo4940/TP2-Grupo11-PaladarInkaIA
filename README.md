@@ -1,5 +1,18 @@
 > **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
 
+## Studio Premium v4 · Rediseño integral validado
+
+La versión **Studio v4** ya está integrada en esta rama mediante el [PR #15](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/15). Mejora la experiencia visual de **todos los módulos**: encabezados con ilustraciones SVG originales por área, tarjetas, formularios, tablas y botones consistentes, navegación inferior móvil consciente de roles, indicadores de conexión y recuperaciones de error. Las fotografías del POS siguen siendo **referenciales**, con arte local de respaldo.
+
+**Calidad verificada sobre el commit del PR:** [GitHub Actions · 200 capturas reales](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374212) · [Fullstack React y backend](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374023) · [Seguridad/accesibilidad](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374113) · [Instalación limpia Docker](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374123).
+
+- **200 PNG originales**, desde login hasta módulos y estados responsive, con galería `GALERIA_200.html`, `MANIFIESTO_SHA256_200.csv` y métricas de navegador.
+- **51 pruebas de backend**, **27/27 controles HTTP**, cero errores JavaScript detectados y comprobación del ancho real de los PNG a 320, 414, 820 y 1366 píxeles.
+- Se corrigió un overflow real del formulario de Inventario en teléfonos angostos. Las tablas de muchas columnas se desplazan **dentro de su panel**, no ensanchan la página.
+- [Decisiones de diseño, matriz de QA y límites del piloto](docs/ESTUDIO_PREMIUM_V4.md).
+
+**Estado:** aprobado para demostración y piloto técnico en entorno controlado. Para uso comercial se necesita UAT firmada, infraestructura endurecida, datos y fotografías autorizados, backups verificados y proceso tributario correspondiente.
+
 ## Experiencia premium v3 — validada para piloto técnico
 
 La mejora [PR #14 (fusionado)](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/14) está integrada en esta rama de entrega. Incluye centro de operaciones con datos del servidor, sincronización verificable, ayuda accesible y navegación por roles, carrito móvil, fotografías referenciales con ilustración local de respaldo y diseño responsive. La [ejecución E2E aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45897585108) generó **152 PNG auténticos**: 100 escenarios previos más 52 capturas en pantallas de 360, 390, 768 y 1440 px (login, 11 módulos y centro de ayuda), con galería, manifiesto SHA-256, 27/27 controles HTTP, cero errores JavaScript y cero desbordamientos horizontales detectados. También aprobaron Fullstack Quality, Fresh Clone Docker y Security and Accessibility QA (axe-core automatizado preliminar).
