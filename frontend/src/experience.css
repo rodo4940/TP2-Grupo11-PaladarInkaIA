@@ -217,3 +217,7 @@ kbd{display:inline-block;border:1px solid #d7d6cb;border-bottom-width:3px;border
  .jump-cart{width:100%}
  .product-card .food-top{font-size:7px}
 }
+
+/* El enlace de salto solo aparece al navegar con teclado, nunca por enfoque programático. */
+.skip-link:focus:not(:focus-visible){top:-120px!important}
+.skip-link:focus-visible{top:14px!important}
