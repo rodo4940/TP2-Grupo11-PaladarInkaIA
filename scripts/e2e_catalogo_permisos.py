@@ -24,6 +24,9 @@ def enter(page,login='admin'):
     expect(page.get_by_role('heading',name='Resumen operativo')).to_be_visible()
 
 def tab(page,title,heading):
+    mobile_menu=page.get_by_role('button',name='Abrir menú')
+    if mobile_menu.is_visible():
+        mobile_menu.click()
     page.locator('nav').get_by_role('button',name=title).click()
     expect(page.get_by_role('heading',name=heading,exact=True).first).to_be_visible()
 
