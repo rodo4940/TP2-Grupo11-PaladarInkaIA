@@ -1,0 +1,32 @@
+name: One-time Vite dependency security refresh
+on:
+  push:
+    branches: [feature/mvp-demostrable-qa-20261126]
+    paths: [.github/workflows/dependency-security-refresh.yml]
+permissions:
+  contents: write
+jobs:
+  patch-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Refresh vulnerable Vite 7.3.6 to patched 7.3.8
+        working-directory: frontend
+        run: npm install --save-exact vite@7.3.8 --package-lock-only --ignore-scripts
+      - name: Verify clean install and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Audit high-severity dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
+      - name: Commit deterministic lockfile update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json
+          git diff --cached --quiet || git commit -m "chore(security): lock Vite 7.3.8 with security patches"
+          git push
