@@ -1,0 +1,40 @@
+name: Fresh Clone Local Start (Docker Compose)
+on:
+  push:
+    branches: [main, feature/mvp-demostrable-qa-20261126]
+    paths:
+      - scripts/start.sh
+      - scripts/qa-smoke.py
+      - docker-compose.yml
+      - backend/Dockerfile
+      - frontend/Dockerfile
+      - backend/app/**
+      - frontend/src/**
+      - .github/workflows/first-run-smoke.yml
+  pull_request:
+    paths:
+      - scripts/**
+      - docker-compose.yml
+      - backend/**
+      - frontend/**
+      - .github/workflows/first-run-smoke.yml
+permissions:
+  contents: read
+jobs:
+  clean-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run from clean clone without existing .env or volumes
+        run: bash scripts/start.sh
+      - name: Verify React and API health
+        run: bash scripts/verify.sh
+      - name: Exercise login, POS, stock, payment and report over HTTP
+        run: python3 scripts/qa-smoke.py
+      - name: Show diagnostics on failure (never print .env)
+        if: failure()
+        run: docker compose logs --tail=100 backend frontend db
+      - name: Remove ephemeral test volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans || true

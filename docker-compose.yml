@@ -1,21 +1,24 @@
+# Desarrollo local / piloto técnico con datos ficticios. No desplegar así en Internet.
 services:
   db:
     image: postgres:17
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DATABASE_NAME:-paladar_inka}
       POSTGRES_USER: ${DATABASE_USER:-paladar_user}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Define DATABASE_PASSWORD en .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "127.0.0.1:5432:5432"
+    # PostgreSQL solo es accesible entre servicios; evita conflictos con PostgreSQL local.
+    expose: ["5432"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 15
   backend:
     build: {context: ./backend}
+    restart: unless-stopped
     environment:
       APP_NAME: ${APP_NAME:-Paladar Inka API}
       APP_ENV: ${APP_ENV:-development}
@@ -30,18 +33,23 @@ services:
       TOKEN_TTL_MINUTES: ${TOKEN_TTL_MINUTES:-480}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
-    ports:
-      - "127.0.0.1:8000:8000"
+    ports: ["127.0.0.1:${BACKEND_PORT:-8000}:8000"]
     depends_on:
       db: {condition: service_healthy}
     command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
   frontend:
     build: {context: ./frontend}
+    restart: unless-stopped
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
-    ports:
-      - "127.0.0.1:5173:5173"
+    ports: ["127.0.0.1:${FRONTEND_PORT:-5173}:5173"]
     depends_on:
-      - backend
+      backend: {condition: service_healthy}
 volumes:
   postgres_data:
