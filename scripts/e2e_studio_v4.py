@@ -136,6 +136,42 @@ with sync_playwright() as browser_tool:
         page.keyboard.press('Alt+1')
         expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
       context.close()
+    # Validación funcional sin Internet al proveedor de fotografías: se usa arte local.
+    offline=browser.new_context(viewport={'width':414,'height':896},locale='es-PE')
+    offline.route('**/images.unsplash.com/**',lambda request:request.abort())
+    p_off=offline.new_page()
+    p_off.set_default_timeout(30000)
+    p_off.goto(BASE,wait_until='domcontentloaded')
+    expect(p_off.get_by_role('heading',name='Bienvenido')).to_be_visible()
+    p_off.wait_for_function("""() => {
+       const image=document.querySelector('.login-hero-photo img');
+       return image && image.currentSrc.includes('/illustrations/pizza-artisan.svg')
+          && image.complete && image.naturalWidth>0;
+    }""")
+    p_off.locator('input[autocomplete="username"]').fill('admin')
+    p_off.locator('input[autocomplete="current-password"]').fill(PASSWORD)
+    p_off.get_by_role('button',name='Ingresar al sistema').click()
+    expect(p_off.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    p_off.get_by_role('button',name='Ir a Vender').click()
+    expect(p_off.get_by_role('heading',name='Nuevo pedido')).to_be_visible()
+    p_off.wait_for_function("""() => {
+      const photos=[...document.querySelectorAll('.product-card img')];
+      return photos.length>=4 && photos.every(img=>img.currentSrc.includes('/illustrations/pizza-artisan.svg') && img.complete && img.naturalWidth>0);
+    }""",timeout=30000)
+    offline.close()
+    # El rol cocina no debe tener un acceso de venta en su dock ni sidebar.
+    restricted=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,locale='es-PE')
+    p_role=restricted.new_page()
+    p_role.set_default_timeout(30000)
+    p_role.goto(BASE)
+    p_role.locator('input[autocomplete="username"]').fill('cocina')
+    p_role.locator('input[autocomplete="current-password"]').fill(PASSWORD)
+    p_role.get_by_role('button',name='Ingresar al sistema').click()
+    expect(p_role.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(p_role.get_by_role('button',name='Ir a Vender')).to_have_count(0)
+    p_role.get_by_role('button',name='Abrir menú').click()
+    expect(p_role.locator('nav').get_by_role('button',name='Ventas / POS')).to_have_count(0)
+    restricted.close()
     browser.close()
 
 assert count==200 and len(data['screenshots'])==200, 'La matriz debe contener exactamente 200 capturas'
