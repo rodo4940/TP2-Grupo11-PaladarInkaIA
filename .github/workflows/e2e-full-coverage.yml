@@ -1,16 +1,19 @@
 name: Extended Full-System UI Evidence
 on:
   push:
-    branches: [release/paladar-inka-v1-piloto]
+    branches: [release/paladar-inka-v1-piloto, feature/premium-ui-100-evidencias]
     paths:
       - "scripts/e2e_catalogo_permisos.py"
       - "scripts/e2e_browser.py"
       - "scripts/e2e_professional_redesign.py"
+      - "scripts/e2e_premium_visual.py"
       - "scripts/qa_security_smoke.py"
       - "frontend/src/**"
       - "frontend/index.html"
       - "backend/app/**"
       - ".github/workflows/e2e-full-coverage.yml"
+  pull_request:
+    branches: [release/paladar-inka-v1-piloto]
   workflow_dispatch:
 permissions:
   contents: read
@@ -90,9 +93,9 @@ jobs:
           folder=pathlib.Path('e2e/evidencias')
           obj=json.loads((folder/'e2e-results.json').read_text())
           pics=list(folder.glob('*.png'))
-          assert len(pics)==90,(len(pics),[p.name for p in pics])
-          assert len(obj['screenshots'])==90
-          assert len({x['file'] for x in obj['screenshots']})==90
+          assert len(pics)==100,(len(pics),[p.name for p in pics])
+          assert len(obj['screenshots'])==100
+          assert len({x['file'] for x in obj['screenshots']})==100
           report=json.loads((folder/'security-smoke-results.json').read_text())
           assert report['count']>=20 and report['failed']==0,report
           print('Validated screenshots:',len(pics),'Security controls:',report['count'])
