@@ -30,6 +30,13 @@ jobs:
         run: bash scripts/start.sh
       - name: Verify React and API health
         run: bash scripts/verify.sh
+      - name: Re-run PowerShell launcher and ensure secrets are preserved
+        shell: pwsh
+        run: |
+          $before = (Get-FileHash .env -Algorithm SHA256).Hash
+          ./scripts/start.ps1
+          $after = (Get-FileHash .env -Algorithm SHA256).Hash
+          if ($before -ne $after) { throw 'PowerShell launcher overwrote existing .env' }
       - name: Exercise login, POS, stock, payment and report over HTTP
         run: python3 scripts/qa-smoke.py
       - name: Show diagnostics on failure (never print .env)
