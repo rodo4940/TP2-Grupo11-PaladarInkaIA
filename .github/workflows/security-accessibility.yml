@@ -1,0 +1,119 @@
+name: Security and Accessibility QA
+on:
+  push:
+    branches: [release/paladar-inka-v1-piloto]
+    paths:
+      - ".github/workflows/security-accessibility.yml"
+      - "backend/**"
+      - "frontend/**"
+      - "scripts/qa_accessibility.py"
+      - "scripts/qa_security_smoke.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Python SAST via Bandit
+        run: |
+          pip install "bandit>=1.8,<2"
+          mkdir -p e2e/quality
+          bandit -r backend/app -ll -ii -f json -o e2e/quality/bandit.json
+      - name: Dependency vulnerability check for frontend
+        run: |
+          npm ci --prefix frontend
+          npm audit --prefix frontend --audit-level=high --json > e2e/quality/npm-audit.json
+      - name: Measure frontend distribution asset size
+        run: |
+          npm run build --prefix frontend
+          du -ah frontend/dist | sort -rh | head -20 > e2e/quality/bundle-sizes.txt
+          cat e2e/quality/bundle-sizes.txt
+      - name: Upload source and dependency security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paladar-static-security
+          path: e2e/quality/**
+  browser-accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: paladar_accessibility
+          POSTGRES_USER: qa_user
+          POSTGRES_PASSWORD: temporary_ci_only_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qa_user -d paladar_accessibility"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: paladar_accessibility
+      DATABASE_USER: qa_user
+      DATABASE_PASSWORD: temporary_ci_only_password
+      CORS_ORIGINS: http://127.0.0.1:5173
+      VITE_API_URL: http://127.0.0.1:8000
+      E2E_FRONTEND_URL: http://127.0.0.1:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Generate local ephemeral authentication secrets
+        run: |
+          python - <<'PY'
+          import os,secrets
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('JWT_SECRET='+secrets.token_hex(32)+'\n')
+              f.write('SEED_ADMIN_PASSWORD='+secrets.token_urlsafe(24)+'\n')
+          PY
+      - name: Install backend and axe-core auditing tools
+        run: |
+          pip install "./backend[test]" playwright
+          npm ci --prefix frontend
+          npm install --no-save --prefix frontend axe-core
+      - name: Migrate PostgreSQL and seed fictional example records
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.seed
+      - name: Start the real React and FastAPI app
+        run: |
+          (cd backend && nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../backend-a11y.log 2>&1 &)
+          (cd frontend && nohup npm run dev -- --host 127.0.0.1 > ../frontend-a11y.log 2>&1 &)
+          python - <<'PY'
+          import time,urllib.request
+          for u in ('http://127.0.0.1:8000/api/v1/health','http://127.0.0.1:5173'):
+              for attempt in range(45):
+                  try:
+                      with urllib.request.urlopen(u,timeout=3) as r:
+                          if r.status==200:break
+                  except Exception:pass
+                  time.sleep(1)
+              else:raise RuntimeError('Not ready: '+u)
+          PY
+      - name: Run axe-core WCAG 2.1 AA automated preliminary checks
+        run: python scripts/qa_accessibility.py
+      - name: Preserve accessibility findings, including failing reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paladar-wcag-axe-evidence
+          path: |
+            e2e/evidencias/wcag_axe_preliminary.json
+            backend-a11y.log
+            frontend-a11y.log
