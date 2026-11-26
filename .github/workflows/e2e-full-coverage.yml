@@ -7,6 +7,7 @@ on:
       - "scripts/e2e_browser.py"
       - "scripts/e2e_professional_redesign.py"
       - "scripts/e2e_premium_visual.py"
+      - "scripts/build_evidence_gallery.py"
       - "scripts/qa_security_smoke.py"
       - "frontend/src/**"
       - "frontend/index.html"
@@ -100,6 +101,8 @@ jobs:
           assert report['count']>=20 and report['failed']==0,report
           print('Validated screenshots:',len(pics),'Security controls:',report['count'])
           PY
+      - name: Build HTML gallery, SHA256 manifest and auditable report
+        run: python scripts/build_evidence_gallery.py
       - name: Upload original evidence and logs
         if: always()
         uses: actions/upload-artifact@v4
