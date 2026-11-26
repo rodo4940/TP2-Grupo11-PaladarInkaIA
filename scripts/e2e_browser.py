@@ -134,3 +134,4 @@ from subprocess import run
 from sys import executable
 run([executable, 'scripts/e2e_operaciones.py'], check=True)
 run([executable, 'scripts/e2e_catalogo_permisos.py'], check=True)
+run([executable, 'scripts/e2e_professional_redesign.py'], check=True)
