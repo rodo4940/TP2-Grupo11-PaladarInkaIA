@@ -8,6 +8,14 @@ on:
       - "frontend/**"
       - "scripts/qa_accessibility.py"
       - "scripts/qa_security_smoke.py"
+  pull_request:
+    branches: [release/paladar-inka-v1-piloto]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'scripts/qa_accessibility.py'
+      - 'scripts/qa_security_smoke.py'
+      - '.github/workflows/security-accessibility.yml'
   workflow_dispatch:
 permissions:
   contents: read
