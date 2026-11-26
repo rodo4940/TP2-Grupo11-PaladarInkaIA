@@ -230,3 +230,7 @@ kbd{display:inline-block;border:1px solid #d7d6cb;border-bottom-width:3px;border
 .product-label{color:#775034!important}
 .operations-heading p{color:#54675b!important}
 .operations-ring-info>p{color:#526658!important}
+
+/* Los productos exhiben un recurso local desde el primer fotograma mientras llega la fotografía externa. */
+.photo-illustration{background:#7c5038 url('/illustrations/pizza-artisan.svg') center/cover no-repeat}
+.photo-illustration svg{display:none}
