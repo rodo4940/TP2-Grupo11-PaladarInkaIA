@@ -1,7 +1,7 @@
 """Diez capturas adicionales de la UI premium, ejecutadas contra React/FastAPI reales.
 
-Sin datos inventados en las imágenes. Las fotografías externas se verifican mediante
-naturalWidth: si el CDN falla, la prueba falla (no se presenta como evidencia visual).
+Sin datos inventados en las imágenes. Las imágenes se verifican mediante naturalWidth; si el CDN falla,
+la interfaz muestra una ilustración local original claramente identificada.
 """
 import json
 import os
@@ -69,7 +69,7 @@ with sync_playwright() as p:
     }""",timeout=25000)
     # El archivo cargado puede no estar pintado al tomar fullPage screenshots.
     page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
-    capture(page,93,'premium_catalogo_fotos_reales','Todas las tarjetas de pizzas con fotografías CDN decodificadas y verificadas y precios de API')
+    capture(page,93,'premium_catalogo_fotos_reales','Tarjetas con imágenes decodificadas (fotografías de referencia o ilustración local) verificadas y precios de API')
     page.locator('.product-card').first.click()
     capture(page,94,'premium_carrito_una_pizza','Carrito con suma al seleccionar una ficha visual')
     page.locator('.product-card').nth(1).click()
