@@ -1,3 +1,5 @@
+> **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
+
 # Paladar Inka AI — gestión integral de pizzería
 
 Sistema académico de ingeniería de software desarrollado para **El Paladar del Inka**, Taller de Proyectos 2, Universidad Continental (2026-II).
