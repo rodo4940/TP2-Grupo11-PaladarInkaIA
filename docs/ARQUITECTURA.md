@@ -2,7 +2,7 @@
 
 ## Alcance
 
-El frontend React (TypeScript) consulta a FastAPI. FastAPI usa un único Postgres 17 como fuente de verdad. Existe un MVP anterior independiente (`demo_funcional/`) que no comparte base de datos, y debe identificarse como prueba de concepto para evitar confusiones de resultados y capturas.
+El frontend React (TypeScript) consulta a FastAPI. FastAPI utiliza PostgreSQL 17 como fuente de verdad. La única aplicación activa es este monolito modular integrado; el prototipo independiente anterior se eliminó del árbol de distribución (permanece únicamente en el historial Git). Los datos de instalación automática son ficticios y no representan operaciones de la pizzería.
 
 ## Decisiones registradas
 
