@@ -1,130 +1,77 @@
-# Paladar Inka AI
+# Paladar Inka AI · Software de gestión para pizzería
 
-## Descripcion
+Proyecto académico de Ingeniería de Sistemas e Informática, Universidad Continental (Cusco, 2026). **El Paladar del Inka**.
 
-Sistema inteligente basado en IA para la gestion de ventas, inventario y atencion al cliente en la pizzeria El Paladar del Inka.
+## Estado real
 
-TASK-001 contiene solo el bootstrap tecnico: backend, frontend, base de datos, Docker, pruebas y documentacion inicial. No incluye modulos funcionales de negocio.
+Esta rama integra el **frontend React** con una **API FastAPI** que persiste en **PostgreSQL 17**, con 36+ pruebas de integración de negocio, CI, control de roles y migraciones Alembic. La aplicación no representa un despliegue empresarial autorizado ni una aprobación firmada por la pizzería. Se debe completar UAT con usuarios reales, revisión de seguridad y un plan de operaciones antes de un uso productivo.
+
+El módulo de recomendaciones utiliza reglas explicables y proyecciones descriptivas; **no se afirma que exista un modelo de machine learning entrenado** sin conjunto de datos de ventas suficiente.
+
+## Módulos
+
+| Módulo | Función | Backend |
+|---|---|---|
+| Autenticación y RBAC | Usuarios con JWT; roles admin, caja y cocina | `/auth/*`, `/users/*` |
+| Ventas/POS | Crear pedidos y registrar pagos sin duplicados | `/orders`, `/orders/{id}/payment` |
+| Cocina | Estados válidos: pendiente → preparando → listo → entregado | `/orders/{id}/status` |
+| Inventario | Reserva de recetas, stock atómico y Kardex | `/ingredients`, `/inventory/movements` |
+| Productos | Catálogo, precios y receta por producto | `/products` |
+| Clientes | Registro y asociación a pedidos | `/customers` |
+| Reportes | Ventas cobradas, métodos de pago, popularidad | `/reports/sales` |
+| Inteligencia operativa | Ranking de popularidad y media móvil ponderada | `/recommendations`, `/ai/demand-forecast` |
+| Auditoría | Historial de operaciones de negocio | `/audit` |
+| Monitoreo | Salud de API y base de datos | `/health`, `/ready` |
+
+## Preparación local (requiere Docker Compose v2)
+
+1. Copia variables: `cp .env.example .env` (PowerShell: `Copy-Item .env.example .env`).
+2. Cambia **DATABASE_PASSWORD**, **JWT_SECRET** (mínimo 32 caracteres aleatorios) y **SEED_ADMIN_PASSWORD** (mínimo 12 caracteres). Nunca publiques `.env`.
+3. Levanta el stack: `docker compose up --build -d`.
+4. Inicializa **solo datos ficticios de demostración**: `docker compose exec backend python -m app.seed`. Esta semilla está prohibida en `APP_ENV=production` y es idempotente.
+5. Abre `http://localhost:5173` e ingresa con cuentas demo `admin`, `cajero` o `cocina`, todas con la contraseña **que tú configuraste en .env**.
+6. Swagger: `http://localhost:8000/docs`. Health: `http://localhost:8000/api/v1/health`.
+
+> Nunca usar contraseñas demo para cuentas reales. La semilla solo funciona en entornos no productivos.
+
+## Verificación
+
+```bash
+# Mismas pruebas que se ejecutan en GitHub Actions
+# Si usas Docker, no requiere Python local
+
+docker compose exec backend pytest -q
+
+docker compose exec backend alembic current
+
+# Compilar la interfaz
+docker compose exec frontend npm run build
+```
+
+En el PR revisa los jobs `Fullstack Quality` (pruebas y migración Postgres / build de React) y `MVP Demonstration Tests`. El XML de pruebas se publica como artefacto de CI. La etiqueta verde de CI verifica ese conjunto concreto de pasos, no una auditoría externa de seguridad o una instalación real.
 
 ## Arquitectura
 
-El proyecto usa un monolito modular:
+`React + TypeScript → FastAPI → SQLAlchemy → PostgreSQL`, Docker Compose en local. Migraciones versionadas en `backend/alembic/versions`. Servicios principales transaccionales (sin microservicios ni colas para primera versión).
 
-- `backend/`: API central con FastAPI y reglas de negocio futuras.
-- `frontend/`: cliente React con TypeScript.
-- `db`: PostgreSQL como fuente de verdad operativa.
+- Dinero en **céntimos enteros**, no flotantes.
+- Insumos en unidades base enteras (`g`, `ml`, `unit`); recetas vinculadas al producto.
+- Reserva de inventario mediante `UPDATE ... WHERE stock >= cantidad`, atómica en BD.
+- Cancelaciones restauran consumos originales registrados en `order_consumptions`.
+- Pago único por pedido mediante `UNIQUE(order_id)` y comprobación del total.
+- Acceso a endpoints por JWT y validación del rol en servidor.
+- Bitácora registra acciones sobre entidades relevantes.
 
-## Tecnologias
+## Limitaciones antes de producción
 
-- Python 3.12
-- FastAPI
-- SQLAlchemy 2.x
-- Alembic
-- Pydantic v2 y pydantic-settings
-- PostgreSQL 17
-- Pytest
-- Node.js 22
-- React
-- TypeScript
-- Vite
-- Docker y Docker Compose
+No incluye integración con SUNAT, pasarelas de pago reales, protección avanzada contra fuerza bruta, restablecimiento de contraseña seguro, versionado de recetas frente a cambios históricos de catálogo ni una política completa de backups y retención. El frontend utiliza sessionStorage para tokens y debe cambiarse a sesiones HttpOnly seguras en un despliegue público. Revisar OWASP ASVS y requerimientos legales de datos personales antes de producción.
 
-## Requisitos
+## Documentación
 
-- Git
-- Docker Desktop
-- Docker Compose v2
+- [Arquitectura y decisiones](docs/ARQUITECTURA.md)
+- [Plan de QA y criterios de evidencia](docs/PLAN_QA.md)
+- [Manual operativo](docs/MANUAL_USUARIO.md)
+- [Lista de controles pendientes para producción](docs/CHECKLIST_PRODUCCION.md)
+- [MVP previo de demostración (separado)](demo_funcional/README.md)
 
-## Configuracion
-
-1. Clonar el repositorio.
-2. Copiar `.env.example` a `.env`.
-3. Revisar los valores locales de `.env`.
-4. Iniciar Docker.
-
-```bash
-cp .env.example .env
-```
-
-En Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-## Ejecucion
-
-```bash
-docker compose up --build
-```
-
-## URLs
-
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
-- Swagger: http://localhost:8000/docs
-- Health: http://localhost:8000/api/v1/health
-- Ready: http://localhost:8000/api/v1/ready
-
-## Pruebas backend
-
-```bash
-docker compose exec backend pytest -v
-```
-
-Tambien puede ejecutarse localmente desde `backend/` si las dependencias estan instaladas:
-
-```bash
-pytest -v
-```
-
-## Migraciones
-
-Desde `backend/`:
-
-```bash
-alembic revision --autogenerate -m "descripcion"
-alembic upgrade head
-```
-
-Alembic toma la URL de base de datos desde las mismas variables usadas por la aplicacion.
-
-## Detener proyecto
-
-Detener contenedores conservando volumenes:
-
-```bash
-docker compose down
-```
-
-Detener contenedores y eliminar volumenes, incluyendo datos locales de PostgreSQL:
-
-```bash
-docker compose down -v
-```
-
-## Estructura
-
-- `backend/app/api`: rutas HTTP versionadas.
-- `backend/app/core`: configuracion central.
-- `backend/app/db`: conexion y utilidades de base de datos.
-- `backend/alembic`: migraciones.
-- `backend/tests`: pruebas automatizadas.
-- `frontend/src`: aplicacion React.
-- `docs`: documentacion futura del proyecto.
-- `scripts`: scripts futuros de apoyo.
-
-## Seguridad
-
-No subir `.env`, claves, tokens, passwords reales ni datos personales. Los valores de `.env.example` son placeholders para desarrollo local.
-
-
-## MVP demostrable con evidencias QA (rama de trabajo)
-
-Además del bootstrap técnico descrito arriba, la rama `feature/mvp-demostrable-qa-20261126` incorpora un **MVP de demostración autocontenido**, separado de la aplicación principal React/PostgreSQL. Usa FastAPI, una interfaz web simple, SQLite local y 27 pruebas de integración reproducibles.
-
-- [Guía de ejecución del MVP](demo_funcional/README.md)
-- [Evidencias y límites de validación](demo_funcional/EVIDENCIA_EJECUCION.md)
-- [Pull request de revisión](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/11)
-
-Las 14 capturas del dossier corresponden al **MVP local con datos ficticios**. No significan despliegue de la solución completa ni pruebas de aceptación del restaurante.
+**Autores:** Jamil Shandee Hinojosa Ttito; Jose Paolo Champi Palacios; Rodolfo Muñoz Cruz; Erik Alexander Callañaupa Quispe. **Docente:** Ing. Néstor Gutiérrez Huamán.
