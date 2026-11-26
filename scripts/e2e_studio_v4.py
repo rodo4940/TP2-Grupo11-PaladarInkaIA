@@ -61,7 +61,7 @@ def snapshot(page,slug,description):
     # parezca correcto (p. ej., grillas con :has y formularios de Inventario).
     with (OUT/filename).open('rb') as file:
       header=file.read(24)
-    assert header[:8]==b'\\x89PNG\\r\\n\\x1a\\n', f'PNG inválido: {filename}'
+    assert header[:8]==b'\x89PNG\r\n\x1a\n', f'PNG inválido: {filename}'
     image_width,image_height=struct.unpack('>II',header[16:24])
     expected_width=page.viewport_size['width']
     assert image_width==expected_width,(
