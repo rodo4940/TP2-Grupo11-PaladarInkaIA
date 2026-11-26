@@ -1,7 +1,7 @@
 name: Release Image and Configuration Verification
 on:
   push:
-    branches: [feature/mvp-demostrable-qa-20261126]
+    branches: [main, feature/mvp-demostrable-qa-20261126]
     paths:
       - "backend/Dockerfile.prod"
       - "backend/app/**"
