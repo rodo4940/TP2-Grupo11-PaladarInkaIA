@@ -67,7 +67,9 @@ with sync_playwright() as p:
     recipe=page.locator('section.panel').filter(has=page.get_by_role('heading',name='Asignación de receta')).first
     recipe.get_by_label('Producto').select_option(label='Pizza integral de pruebas QA')
     for ingredient,amount in [('Harina (g )','220'),('Queso mozzarella (g )','130')]:
-        recipe.get_by_label('Insumo').select_option(label=ingredient)
+        ingredient_value=recipe.get_by_label('Insumo').locator('option').filter(has_text=ingredient.split(' (')[0]).first.get_attribute('value')
+        assert ingredient_value, 'No se encontró el insumo requerido para la receta'
+        recipe.get_by_label('Insumo').select_option(ingredient_value)
         recipe.get_by_label('Cantidad por unidad').fill(amount)
         recipe.get_by_role('button',name=re.compile('Agregar insumo')).click()
     photo(page,'44_receta_dos_ingredientes.png','Receta preparada con harina y queso')
