@@ -28,7 +28,7 @@ Se utilizan **fotografías de referencia**, no fotos verificadas de productos ve
 
 Una referencia comprobable: https://unsplash.com/photos/a-pepperoni-pizza-sitting-on-top-of-a-wooden-cutting-board-xIqVfW8XUt4
 
-Los cuatro recursos de ejemplo se identifican en `frontend/src/assets/menuPhotos.ts` por SKU (`PIZ-INK`, `PIZ-AND`, `PIZ-SUP`, `PIZ-VEG`) y se sirven desde `images.unsplash.com`. Para productos nuevos sin foto verificada se utiliza un estado visual neutro en vez de asignar arbitrariamente una fotografía de otro artículo.
+Los cuatro recursos de ejemplo se identifican en `frontend/src/assets/menuPhotos.ts` por SKU (`PIZ-INK`, `PIZ-AND`, `PIZ-SUP`, `PIZ-VEG`) y se sirven desde `images.unsplash.com`. Para productos nuevos de la categoría Pizzas se utiliza una fotografía genérica **siempre etiquetada como referencial**, sin afirmar que corresponde a su receta; otras categorías sin recurso verificado mantienen un estado visual neutro.
 
 **Decisión pendiente para producción:** sustituir estas fotos por fotografías propias aprobadas, comprimirlas a WebP/AVIF y servirlas desde el almacenamiento del proyecto/CDN controlado. El CDN remoto puede no cargar sin Internet; el componente presenta un estado de respaldo y las pruebas de fotografía declaran fallo si la imagen esperada no se carga.
 
@@ -40,7 +40,7 @@ Los cuatro recursos de ejemplo se identifican en `frontend/src/assets/menuPhotos
 |---|---|---|
 | 91 | Login con fotografía | Imagen cargada en Chromium antes de capturar |
 | 92 | Dashboard 1536 px | Datos de API y fotografía cargada |
-| 93 | POS con fotos | 4 tarjetas y 4 imágenes con `naturalWidth > 0` |
+| 93 | POS con fotos | Todas las tarjetas de pizzas con imagen completa y decodificada (`naturalWidth > 0` y `decode()`) |
 | 94 | Carrito una pizza | Añadir desde tarjeta funcional |
 | 95 | Carrito dos pizzas | Suma interactiva y detalle de unidades |
 | 96 | Catálogo administrativo | Miniatura fotografiada por SKU |
