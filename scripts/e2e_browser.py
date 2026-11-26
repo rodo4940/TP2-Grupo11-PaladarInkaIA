@@ -128,3 +128,8 @@ with sync_playwright() as p:
     (OUT/'e2e-results.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
     print('CAPTURAS REALES VERIFICADAS:',len(manifest['screenshots']))
     browser.close()
+
+# Escenarios funcionales adicionales con datos ficticios, ejecutados en el mismo entorno de CI.
+from subprocess import run
+from sys import executable
+run([executable, 'scripts/e2e_operaciones.py'], check=True)
