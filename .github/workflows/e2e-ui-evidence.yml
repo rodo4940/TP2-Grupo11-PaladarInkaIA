@@ -1,1 +1,79 @@
-The requested file reference is not currently visible. Use files.search or files.list to rediscover the file, then retry with a returned ref_id or file_id.
+name: Real UI Screenshots (React + PostgreSQL)
+on:
+  push:
+    branches: [feature/mvp-demostrable-qa-20261126]
+    paths:
+      - "scripts/e2e_browser.py"
+      - ".github/workflows/e2e-ui-evidence.yml"
+  workflow_dispatch:
+jobs:
+  e2e-evidence:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: paladar_e2e
+          POSTGRES_USER: paladar_user
+          POSTGRES_PASSWORD: local_e2e_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U paladar_user -d paladar_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: paladar_e2e
+      DATABASE_USER: paladar_user
+      DATABASE_PASSWORD: local_e2e_password
+      CORS_ORIGINS: http://127.0.0.1:5173
+      VITE_API_URL: http://127.0.0.1:8000
+      JWT_SECRET: only-for-github-ci-ui-testing-secret-2026
+      SEED_ADMIN_PASSWORD: DemoPassword1234!
+      E2E_FRONTEND_URL: http://127.0.0.1:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Install dependencies
+        run: |
+          pip install "./backend[test]" playwright
+          npm ci --prefix frontend
+      - name: Migrate and seed fictional data
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.seed
+      - name: Start FastAPI and React
+        run: |
+          (cd backend && nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../backend-e2e.log 2>&1 &)
+          (cd frontend && nohup npm run dev -- --host 127.0.0.1 > ../frontend-e2e.log 2>&1 &)
+          python - <<'PY'
+          import time,urllib.request
+          for url in ['http://127.0.0.1:8000/api/v1/health','http://127.0.0.1:5173']:
+              for attempt in range(45):
+                  try:
+                      with urllib.request.urlopen(url,timeout=3) as r:
+                          assert r.status==200
+                          print('UP:',url)
+                          break
+                  except Exception:
+                      time.sleep(1)
+              else: raise RuntimeError('No responde: '+url)
+          PY
+      - name: Run real-browser scenarios and screenshots
+        run: python scripts/e2e_browser.py
+      - name: Upload screenshot evidence and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-ui-evidence
+          path: |
+            e2e/evidencias/**
+            backend-e2e.log
+            frontend-e2e.log
