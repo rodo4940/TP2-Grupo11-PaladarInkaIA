@@ -31,8 +31,8 @@ for item in screens:
     records.append({
         'n':int(name.split('_')[0]), 'file':name, 'titulo':item['step'],
         'width':width, 'height':height, 'bytes':len(data),
-        'sha256':sha256(data).hexdigest(), 'timestamp_utc':item['timestamp_utc'],
-        'source':item['source'],
+        'sha256':sha256(data).hexdigest(), 'timestamp_utc':item.get('timestamp_utc', 'no proporcionado'),
+        'source':item.get('source', 'Chromium/Playwright sobre entorno de QA'),
     })
 records.sort(key=lambda row:row['n'])
 assert [r['n'] for r in records]==list(range(1,101)), 'No se encuentra numeración consecutiva 01-100'
