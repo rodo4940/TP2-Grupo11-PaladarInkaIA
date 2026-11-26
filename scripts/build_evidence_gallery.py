@@ -25,7 +25,7 @@ for item in screens:
     path=ROOT/name
     assert path.exists() and path.stat().st_size>1000, f'PNG inexistente o vacío: {name}'
     data=path.read_bytes()
-    assert data[:8]==b'\\x89PNG\\r\\n\\x1a\\n', f'Cabecera PNG inválida: {name}'
+    assert data[:8]==b'\x89PNG\r\n\x1a\n', f'Cabecera PNG inválida: {name}'
     width,height=struct.unpack('>II',data[16:24])
     assert width>=320 and height>=300, f'Resolución insuficiente: {name}'
     records.append({
