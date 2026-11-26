@@ -4,6 +4,8 @@ on:
     branches: [feature/mvp-demostrable-qa-20261126]
     paths:
       - "scripts/e2e_browser.py"
+      - "backend/app/domain/**"
+      - "frontend/src/**"
       - ".github/workflows/e2e-ui-evidence.yml"
   workflow_dispatch:
 jobs:
