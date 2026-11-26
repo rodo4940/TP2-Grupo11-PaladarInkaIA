@@ -1,3 +1,4 @@
+import {useEffect,useRef} from 'react';
 import type {Role} from '../types/domain';
 
 type HelpView='dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings';
@@ -15,11 +16,29 @@ const viewHelp:Record<HelpView,{title:string;steps:string[]}>={
  settings:{title:'Configuración',steps:['Comprueba la versión y el entorno conectados.','Actualiza la contraseña si es necesario.','Cambiar la contraseña revoca sesiones previas.']},
 };
 export function SupportCenter({open,onClose,view,role}:{open:boolean;onClose:()=>void;view:HelpView;role:Role}){
+ const dialogRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  if(!open)return;
+  const before=document.activeElement as HTMLElement|null;
+  const oldOverflow=document.body.style.overflow;
+  document.body.style.overflow='hidden';
+  dialogRef.current?.querySelector<HTMLButtonElement>('.help-close')?.focus();
+  const trap=(event:KeyboardEvent)=>{
+   if(event.key!=='Tab')return;
+   const items=[...(dialogRef.current?.querySelectorAll<HTMLElement>('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')||[])].filter(el=>!el.hasAttribute('disabled'));
+   if(!items.length)return;
+   const first=items[0],last=items[items.length-1];
+   if(event.shiftKey && (document.activeElement===first||!dialogRef.current?.contains(document.activeElement))){event.preventDefault();last.focus();}
+   else if(!event.shiftKey && (document.activeElement===last||!dialogRef.current?.contains(document.activeElement))){event.preventDefault();first.focus();}
+  };
+  document.addEventListener('keydown',trap);
+  return()=>{document.removeEventListener('keydown',trap);document.body.style.overflow=oldOverflow;before?.focus();};
+ },[open]);
  if(!open)return null;
  const item=viewHelp[view];
  const shortcuts=[['Alt + 1','Panel general'],['Alt + 2','Ventas / POS'],['Alt + 3','Pedidos'],['Alt + 4','Cocina']];
  return <div className="help-overlay" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
-  <div className="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title" aria-describedby="help-description">
+  <div className="help-dialog" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="help-title" aria-describedby="help-description">
     <header className="help-head"><div><span className="eyebrow">GUÍA RÁPIDA</span><h2 id="help-title">Centro de ayuda</h2><p id="help-description">Orientación práctica según la pantalla que estás utilizando.</p></div>
       <button className="help-close" aria-label="Cerrar ayuda" onClick={onClose}>×</button></header>
     <section className="help-section"><span className="eyebrow">ESTÁS EN</span><h3>{item.title}</h3>
