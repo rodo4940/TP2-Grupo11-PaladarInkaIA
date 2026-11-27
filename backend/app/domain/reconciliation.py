@@ -152,7 +152,7 @@ def list_refunds(db: Session = Depends(get_db), actor: User = Depends(cashier)) 
 @router.post('/billing/refunds/{refund_id}/confirm')
 def confirm_refund(refund_id: int, payload: RefundConfirmIn,
                    db: Session = Depends(get_db), actor: User = Depends(admin)) -> dict:
-    item = db.scalar(select(Refund).where(Refund.id == refund_id).with_for_update())
+    item = db.scalar(select(Refund).where(Refund.id == refund_id).with_for_update(of=Refund))
     if item is None:
         raise HTTPException(404, 'Solicitud no encontrada')
     if item.status != 'pending':
