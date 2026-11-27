@@ -58,7 +58,7 @@ with sync_playwright() as p:
     wait_photo(page,'.login-hero-photo img')
     capture(page,91,'premium_login_fotografia','Inicio de sesión real con fotografía referencial efectivamente cargada')
     signin(page)
-    wait_photo(page,'.banner-photo img')
+    expect(page.locator('.pi-trend-svg')).to_be_visible()
     capture(page,92,'premium_dashboard_1536','Dashboard premium: indicadores reales y fotografía cargada')
     nav(page,'Ventas (POS)','Ventas / Caja POS')
     assert page.locator('.pi-pos-card').count()>=4,'Faltan pizzas del catálogo semilla'
@@ -70,11 +70,11 @@ with sync_playwright() as p:
     # El archivo cargado puede no estar pintado al tomar fullPage screenshots.
     page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
     capture(page,93,'premium_catalogo_fotos_reales','Tarjetas con imágenes decodificadas (fotografías de referencia o ilustración local) verificadas y precios de API')
-    page.locator('.pi-pos-card').first.click()
+    page.locator('.pi-pos-card-body button').first.click()
     capture(page,94,'premium_carrito_una_pizza','Carrito con suma al seleccionar una ficha visual')
-    page.locator('.pi-pos-card').nth(1).click()
+    page.locator('.pi-pos-card-body button').nth(1).click()
     capture(page,95,'premium_carrito_dos_pizzas','Carrito multirenglón y total calculado en frontend desde catálogo real')
-    nav(page,'Productos y recetas','Productos y recetas')
+    nav(page,'Productos','Productos y recetas')
     wait_photo(page,'.catalog-product-cell img')
     capture(page,96,'premium_catalogo_administracion','Mantenimiento de productos: miniaturas de referencia vinculadas por SKU')
     nav(page,'Cocina','Cocina – KDS')

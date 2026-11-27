@@ -55,7 +55,7 @@ with sync_playwright() as p:
     page.get_by_text('Pedido #1 actualizado a En preparación').wait_for()
     screenshot(page,'08_cocina_preparando_real.png','Cambio de estado verificado por API y React')
     nav.get_by_role('button',name='Inventario').click()
-    page.get_by_role('heading',name='Inventario y Kardex').wait_for()
+    page.get_by_role('heading',name='Inventario').wait_for()
     page.get_by_text('PEDIDO-1').first.wait_for()
     screenshot(page,'09_kardex_real.png','Movimientos de consumo por pedido y saldo real')
     nav.get_by_role('button',name='Reportes').click()

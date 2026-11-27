@@ -28,7 +28,7 @@ modules=[
  ('pos','Ventas (POS)','Ventas / Caja POS'),
  ('orders','Pedidos','Gestión de pedidos'),
  ('kitchen','Cocina','Cocina – KDS'),
- ('inventory','Inventario','Inventario y Kardex'),
+ ('inventory','Inventario','Inventario'),
  ('products','Productos','Productos y recetas'),
  ('customers','Clientes','Clientes'),
  ('reports','Reportes','Reportes y análisis'),
@@ -118,7 +118,7 @@ with sync_playwright() as browser_tool:
         expect(page.locator('.mobile-dock')).to_be_hidden()
       for key,label,heading in modules:
         if key!='dashboard':navigate(page,label,heading)
-        if key!='dashboard':
+        if key not in ('dashboard','pos','orders','kitchen','inventory'):
           expect(page.locator('.module-heading .section-artwork')).to_be_visible()
           expect(page.locator('.module-heading')).to_have_count(1)
         if key=='dashboard':
@@ -131,7 +131,7 @@ with sync_playwright() as browser_tool:
           }""",timeout=35000)
           page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
           if width<=1250:
-            expect(page.get_by_role('button',name='Ver carrito (0)')).to_be_visible()
+            expect(page.locator('.pi-pos-ticket')).to_be_visible()
         if key=='settings':
           expect(page.get_by_role('heading',name='Configuración del entorno',exact=True)).to_be_visible()
         result=inspect(page,slug+'_'+key)

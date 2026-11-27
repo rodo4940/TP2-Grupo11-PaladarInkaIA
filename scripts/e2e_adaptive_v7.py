@@ -15,7 +15,7 @@ VIEWS=[
  ("pos","Ventas (POS)","Ventas / Caja POS"),
  ("orders","Pedidos","Gestión de pedidos"),
  ("kitchen","Cocina","Cocina – KDS"),
- ("inventory","Inventario","Inventario y Kardex"),
+ ("inventory","Inventario","Inventario"),
  ("products","Productos","Productos y recetas"),
  ("customers","Clientes","Clientes"),
  ("reports","Reportes","Reportes y análisis"),

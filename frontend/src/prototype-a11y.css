@@ -36,3 +36,7 @@
  .content .responsive-cards tbody tr,.content .responsive-cards td,.content .responsive-cards tbody td{background:#22201e!important}
  .content .responsive-cards tbody tr:nth-child(even){background:#27231e!important}
 }
+
+/* El centro de ayuda permanece accesible también en móvil. */
+@media(max-width:880px){.top-actions .header-guide{display:grid!important;place-items:center;flex:0 0 32px!important;width:32px!important;min-width:32px!important;padding:0!important}.topbar{gap:5px!important}.pi-global-search{min-width:0!important}.pi-global-search input{min-width:0!important}}
+@media(max-width:390px){.pi-global-search{flex-basis:72px!important}.pi-top-user .header-avatar{width:25px!important;height:25px!important}}

@@ -31,7 +31,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Ingresar al sistema').click()
     expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
     scan('Dashboard')
-    for tab,heading in [('Ventas (POS)','Ventas / Caja POS'),('Pedidos','Gestión de pedidos'),('Cocina','Cocina – KDS'),('Inventario','Inventario y Kardex'),('Productos','Productos y recetas'),('Clientes','Clientes'),('Reportes','Reportes y análisis'),('Finanzas / Caja','Caja y comprobantes'),('IA y recomendaciones','Inteligencia operativa'),('Usuarios','Usuarios y permisos')]:
+    for tab,heading in [('Ventas (POS)','Ventas / Caja POS'),('Pedidos','Gestión de pedidos'),('Cocina','Cocina – KDS'),('Inventario','Inventario'),('Productos','Productos y recetas'),('Clientes','Clientes'),('Reportes','Reportes y análisis'),('Finanzas / Caja','Caja y comprobantes'),('IA y recomendaciones','Inteligencia operativa'),('Usuarios','Usuarios y permisos')]:
         page.locator('nav').get_by_role('button',name=tab).click()
         expect(page.get_by_role('heading',name=heading,exact=True).first).to_be_visible()
         scan(tab)

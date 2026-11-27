@@ -22,7 +22,7 @@ screens=[
  ('pos','Ventas (POS)','Ventas / Caja POS'),
  ('orders','Pedidos','Gestión de pedidos'),
  ('kitchen','Cocina','Cocina – KDS'),
- ('inventory','Inventario','Inventario y Kardex'),
+ ('inventory','Inventario','Inventario'),
  ('products','Productos','Productos y recetas'),
  ('customers','Clientes','Clientes'),
  ('reports','Reportes','Reportes y análisis'),
@@ -115,9 +115,9 @@ with sync_playwright() as p:
                 }""",timeout=35000)
                 page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img=>img.decode()))")
                 if width<=1250:
-                    expect(page.get_by_role('button',name='Ver carrito (0)')).to_be_visible()
+                    expect(page.locator('.pi-pos-ticket')).to_be_visible()
             if key=='products':
-                expect(page.get_by_role('heading',name='Productos',exact=True).first).to_be_visible()
+                expect(page.get_by_role('heading',name='Productos y recetas',exact=True).first).to_be_visible()
             if key=='kitchen':
                 expect(page.locator('.pi-kds-board')).to_be_visible()
             metric=verify_viewport(page,f'{label}_{key}')
