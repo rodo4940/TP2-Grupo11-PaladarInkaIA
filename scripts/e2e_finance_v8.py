@@ -41,7 +41,7 @@ def browser_capture(page, slug, state):
     path=OUT/filename
     page.screenshot(path=str(path),full_page=False,animations='disabled')
     raw=path.read_bytes()
-    assert raw[:8]==b'\\x89PNG\\r\\n\\x1a\\n'
+    assert raw[:8]==b'\x89PNG\r\n\x1a\n'
     w,h=struct.unpack('>II',raw[16:24])
     assert (w,h)==(page.viewport_size['width'],page.viewport_size['height'])
     captures.append({'file':filename,'state':state,'sha256':sha256(raw).hexdigest(),
@@ -139,9 +139,9 @@ result={'count':len(captures),'widths':[x[0] for x in SIZES],
         'captures':captures}
 (OUT/'RESULTADOS_CAJA_V8.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
 with (OUT/'MANIFIESTO_SHA256_16.csv').open('w',encoding='utf-8') as f:
-    f.write('archivo,estado,ancho,alto,sha256\\n')
+    f.write('archivo,estado,ancho,alto,sha256\n')
     for entry in captures:
-        f.write(f"{entry['file']},{entry['state']},{entry['width']},{entry['height']},{entry['sha256']}\\n")
+        f.write(f"{entry['file']},{entry['state']},{entry['width']},{entry['height']},{entry['sha256']}\n")
 cards=[]
 for item in captures:
     name=escape(item['file'],quote=True)
