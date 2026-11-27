@@ -13,7 +13,7 @@ const PHOTO_IDS:Record<string,string>={
  'PIZ-SUP':'photo-1565299624946-b28f40a0ae38',
  'PIZ-VEG':'photo-1513104890138-7c749659a591',
 };
-export const HERO_PHOTO=cdn('photo-1574071318508-1cdbab80d002',1600);
+export const HERO_PHOTO=cdn('photo-1695606393080-ab01e5dbcae0',1800);
 export const productImage=(product:Pick<Product,'sku'|'category'>)=>{
  // Nuevos productos de la categoría Pizzas reciben solo una foto genérica REFERENCIAL.
  // Nunca se asigna automáticamente una pizza a bebidas, postres o insumos.
