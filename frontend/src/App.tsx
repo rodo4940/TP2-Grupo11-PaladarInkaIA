@@ -180,7 +180,7 @@ function App(){
    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
    const link=document.createElement('a');link.href=url;link.download=filename;link.click();URL.revokeObjectURL(url);
  };
- const isAdmin=role==='admin'; const isCashier=role==='cashier'||isAdmin; const isKitchen=role==='kitchen'||isAdmin;
+ const isAdmin=role==='admin';
  const roleLabel={admin:'Administración',cashier:'Caja',kitchen:'Cocina'};
  const changeOrderStatus=(o:Order,status:OrderStatus)=>perform(()=>patch(`/orders/${o.id}/status`,{status},token),`Pedido #${o.id} actualizado a ${labels[status]}`);
  const fetchCustomer=async(customer:Customer)=>{setSelectedCustomer(customer);setCustomerEdit({name:customer.name,phone:customer.phone||'',notes:customer.notes||''});setCustomerInsights(null);
