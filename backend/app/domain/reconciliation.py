@@ -5,6 +5,8 @@ es una constancia humana basada en una referencia externa, NO una verificación
 automática del banco, PSP, OSE ni SUNAT.
 """
 from datetime import date, datetime, time, timedelta, timezone
+from hashlib import sha256
+import json
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -117,6 +119,9 @@ def closeout_response(item: CashCloseout, current: dict) -> dict:
         'note': item.note, 'approval_note': item.approval_note,
         'created_at': item.created_at.isoformat(),
         'approved_at': item.approved_at.isoformat() if item.approved_at else None,
+        'finalized_at': item.finalized_at.isoformat() if item.finalized_at else None,
+        'finalized_by': item.finalized_by,
+        'snapshot_sha256': item.snapshot_sha256,
         'stale': stale,
         'disclaimer': 'Arqueo interno firmado por usuarios del sistema; no cierre tributario ni bancario.',
     }
@@ -159,6 +164,10 @@ def confirm_refund(refund_id: int, payload: RefundConfirmIn,
         raise HTTPException(409, 'La devolución ya fue confirmada')
     if item.requested_by == actor.id:
         raise HTTPException(409, 'La persona solicitante no puede autorizar su propia devolución')
+    today=datetime.now(LIMA).date().isoformat()
+    frozen=db.scalar(select(CashCloseout).where(CashCloseout.day==today).with_for_update())
+    if frozen and frozen.state=='finalized':
+        raise HTTPException(409,'Caja del día finalizada; devolución requiere proceso autorizado')
     item.status = 'confirmed'
     item.confirmed_by = actor.id
     item.confirmation_reference = payload.external_reference.strip()
@@ -236,3 +245,57 @@ def approve_closeout(closeout_id: int, payload: CloseoutApprovalIn,
     db.commit()
     db.refresh(item)
     return closeout_response(item, current)
+
+
+class FinalizeIn(BaseModel):
+    final_note: str=Field(min_length=12,max_length=500)
+
+
+def snapshot_sha(item:CashCloseout)->str:
+    fields={
+        'day':item.day,'opening_cash_cents':item.opening_cash_cents,
+        'expected_cash_cents':item.expected_cash_cents,'counted_cash_cents':item.counted_cash_cents,
+        'variance_cents':item.variance_cents,'gross_payments_cents':item.gross_payments_cents,
+        'confirmed_refunds_cents':item.confirmed_refunds_cents,'payments_count':item.payments_count,
+        'refunds_count':item.refunds_count,'submitted_by':item.submitted_by,
+        'approved_by':item.approved_by,'approval_note':item.approval_note,
+    }
+    return sha256(json.dumps(fields,sort_keys=True,separators=(',',':'),
+                              ensure_ascii=False).encode()).hexdigest()
+
+
+@router.post('/billing/closeouts/{closeout_id}/finalize')
+def finalize_closeout(closeout_id:int,payload:FinalizeIn,db:Session=Depends(get_db),
+                      actor:User=Depends(admin))->dict:
+    """Bloquea internamente el período; no constituye declaración tributaria."""
+    item=db.scalar(select(CashCloseout).where(CashCloseout.id==closeout_id).with_for_update())
+    if item is None:raise HTTPException(404,'Arqueo no encontrado')
+    if item.state!='approved':
+        raise HTTPException(409,'Solo se finaliza un arqueo aprobado')
+    if item.submitted_by==actor.id:
+        raise HTTPException(409,'La persona que registró caja no puede finalizarla')
+    current=daily_totals(db,date.fromisoformat(item.day))
+    if closeout_response(item,current)['stale']:
+        raise HTTPException(409,'Los movimientos cambiaron; se requiere conciliación nueva')
+    if db.scalar(select(Refund.id).where(Refund.status=='pending')) is not None:
+        raise HTTPException(409,'Existen devoluciones pendientes')
+    item.state='finalized';item.finalized_by=actor.id
+    item.finalized_at=datetime.now(timezone.utc)
+    item.snapshot_sha256=snapshot_sha(item)
+    audit(db,actor,'closeout.finalize.internal','cash_closeout',item.id,
+          f'day={item.day};hash={item.snapshot_sha256[:16]};{payload.final_note[:140]}')
+    db.commit();db.refresh(item)
+    return closeout_response(item,current)
+
+
+@router.get('/billing/closeouts/{day}/integrity')
+def integrity(day:date,db:Session=Depends(get_db),actor:User=Depends(cashier))->dict:
+    item=db.scalar(select(CashCloseout).where(CashCloseout.day==day.isoformat()))
+    if item is None:raise HTTPException(404,'Arqueo no encontrado')
+    current=daily_totals(db,day)
+    digest=snapshot_sha(item)
+    return {'day':day.isoformat(),'state':item.state,
+            'hash_saved':item.snapshot_sha256,'hash_current':digest,
+            'hash_valid':item.state=='finalized' and digest==item.snapshot_sha256,
+            'movements_unchanged':not closeout_response(item,current)['stale'],
+            'scope':'INTEGRIDAD INTERNA; NO HOMOLOGACIÓN SUNAT NI BANCARIA'}

@@ -182,8 +182,11 @@ class CashCloseout(Base):
     approval_note: Mapped[str] = mapped_column(String(500), default='', nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finalized_by: Mapped[int | None] = mapped_column(ForeignKey('users.id',ondelete='RESTRICT'),nullable=True)
+    snapshot_sha256: Mapped[str | None] = mapped_column(String(64),nullable=True)
     __table_args__ = (
-        CheckConstraint("state IN ('submitted','approved')", name='ck_closeout_state'),
+        CheckConstraint("state IN ('submitted','approved','finalized')", name='ck_closeout_state'),
         CheckConstraint('opening_cash_cents >= 0', name='ck_closeout_opening'),
         CheckConstraint('counted_cash_cents >= 0', name='ck_closeout_counted'),
     )

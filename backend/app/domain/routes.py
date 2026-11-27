@@ -278,6 +278,12 @@ def change_status(order_id:int,payload:StatusIn,db:Session=Depends(get_db),user:
 def pay(order_id:int,payload:PaymentIn,db:Session=Depends(get_db),user:User=Depends(cashier)) -> Payment:
     order=db.scalar(select(Order).where(Order.id==order_id).with_for_update())
     if order is None:raise not_found('Pedido')
+    from zoneinfo import ZoneInfo
+    from app.domain.models import CashCloseout
+    today=datetime.now(ZoneInfo('America/Lima')).date().isoformat()
+    frozen=db.scalar(select(CashCloseout).where(CashCloseout.day==today).with_for_update())
+    if frozen and frozen.state=='finalized':
+        raise HTTPException(409,'Caja de hoy finalizada; no se admiten pagos nuevos')
     if order.status=='cancelled':raise HTTPException(409,'No se puede pagar un pedido cancelado')
     if order.payment is not None:raise HTTPException(409,'Pedido ya pagado')
     if payload.amount_cents != order.total_cents:raise HTTPException(422,'Importe no coincide con el total del pedido')
