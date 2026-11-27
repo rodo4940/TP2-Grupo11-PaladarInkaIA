@@ -244,7 +244,7 @@ body{background:#f5f4ee}
   min-width:80mm;margin:0;padding:4mm;box-shadow:none!important;border:0;background:#fff!important;
   color:#000!important;
  }
- @page{size:80mm auto;margin:0}
+ @page{margin:0}
  .billing-ticket-table{width:100%;break-inside:avoid}
 }
 @media(prefers-reduced-motion:reduce){
