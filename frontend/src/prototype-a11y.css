@@ -1,0 +1,38 @@
+/* Contraste y coherencia sobre estilos legados — revisión WCAG automatizada */
+.app-footer,.app-footer span,.main-frame>footer,.main-frame>footer span{color:#c7c0b7!important}
+.panel-head>span,.panel-head>div>span,.content .muted,.content .microcopy{color:#c2b9ab!important}
+.tile small,.tile>span small,.tile-grid .tile small{color:#c8c0b0!important}
+.content .kv-list span,.content .alert-row small{color:#c1bbaf!important}
+.content .responsive-cards tbody tr,.content .responsive-cards tbody tr:nth-child(even),.content .responsive-cards tbody tr:nth-child(odd),.content .responsive-cards td,.content .responsive-cards tbody td,.content .table-wrap tbody tr,.content .table-wrap tbody tr:nth-child(even),.content .table-wrap tbody tr:nth-child(odd){
+ background:#1b1b1b!important;color:#efede6!important
+}
+.content .responsive-cards tr:hover,.content .table-wrap tr:hover{background:#31271b!important}
+.content .responsive-cards td b,.content .responsive-cards td strong,.content .table-wrap td b,.content .table-wrap td strong{color:#f5f2eb!important}
+.content .responsive-cards td small,.content .table-wrap td small{color:#c2b9ac!important}
+.content .catalog-product-cell,.content .catalog-product-cell *{background:transparent!important}
+.view-ai .recommendation,.view-ai .recommendation:nth-child(even),.view-ai .recommendation:nth-child(odd){background:#222020!important;color:#f5f0e8!important;border-color:#493e2d!important}
+.view-ai .recommendation p,.view-ai .recommendation small{color:#c5bbb0!important}
+.view-ai .recommendation b,.view-ai .recommendation strong{color:#f6f0e7!important}
+.view-ai .forecast-list>div,.view-ai .forecast-list>div:nth-child(even){background:#242222!important;color:#e9e2d8!important}
+.view-ai .forecast-list small{color:#bcb4a9!important}
+.view-billing label,.view-billing label[for],.view-billing .field>span,.view-billing .form-field label{color:#d9c9b1!important}
+.view-billing .billing-disclaimer,.view-billing .billing-empty,.view-billing .fiscal-warning,.view-billing .fiscal-disclaimer{
+ background:#33281a!important;color:#f5e2bb!important;border-color:#72542a!important
+}
+.view-billing .billing-disclaimer p,.view-billing .billing-disclaimer span,.view-billing .billing-disclaimer strong,.view-billing .billing-empty strong,.view-billing .billing-empty p,.view-billing .fiscal-warning strong,.view-billing .fiscal-warning span,.view-billing .fiscal-warning{
+ color:#f1dfbb!important
+}
+.view-billing .billing-empty{background:#25201a!important}
+.view-billing .fiscal-warning{background:#3a2a1c!important;color:#f8dca8!important}
+.view-billing .fiscal-warning strong{color:#ffdf96!important}
+.view-billing .billing-entry,.view-billing .refund-card,.view-billing .cash-method-card{background:#211f1d!important;color:#f3eade!important}
+.view-billing .billing-entry>strong{color:#faf6ee!important}
+.view-billing .billing-ticket,.view-billing .billing-ticket *,.view-billing .ticket-paper,.view-billing .ticket-paper *{color:#1a1815!important}
+.view-billing .billing-ticket .ticket-warning,.view-billing .ticket-paper .ticket-warning{color:#a52f1d!important}
+.view-billing .billing-empty .billing-note{color:#e6d2a9!important}
+.content input[type=checkbox],.content input[type=radio]{accent-color:#e5ae3c}
+.content a:focus-visible,.content button:focus-visible{outline-color:#ffda73!important}
+@media(max-width:700px){
+ .content .responsive-cards tbody tr,.content .responsive-cards td,.content .responsive-cards tbody td{background:#22201e!important}
+ .content .responsive-cards tbody tr:nth-child(even){background:#27231e!important}
+}

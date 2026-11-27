@@ -3,7 +3,7 @@ import {post} from '../services/api';
 import type {Dashboard,Ingredient,Order,StockMovement} from '../types/domain';
 type Props={ingredients:Ingredient[];movements:StockMovement[];orders:Order[];dashboard:Dashboard|null;admin:boolean;token:string;busy:boolean;onRefresh:()=>Promise<unknown>};
 function exportCsv(ingredients:Ingredient[]){const rows=[['SKU','Insumo','Unidad','Stock','Mínimo'],...ingredients.map(i=>[i.sku,i.name,i.unit,i.stock.toString(),i.minimum_stock.toString()])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+v.replaceAll('"','""')+'"').join(';')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='inventario_paladar_inka.csv';a.click();URL.revokeObjectURL(url)}
-export function ReferenceInventory({ingredients,movements,orders,dashboard,admin,token,busy,onRefresh}:Props){
+export function ReferenceInventory({ingredients,movements,orders,admin,token,busy,onRefresh}:Props){
  const [search,setSearch]=useState('');
  const [filter,setFilter]=useState<'all'|'low'|'normal'>('all');
  const [selectedId,setSelectedId]=useState<number|null>(null);
