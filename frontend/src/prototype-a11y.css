@@ -40,3 +40,15 @@
 /* El centro de ayuda permanece accesible también en móvil. */
 @media(max-width:880px){.top-actions .header-guide{display:grid!important;place-items:center;flex:0 0 32px!important;width:32px!important;min-width:32px!important;padding:0!important}.topbar{gap:5px!important}.pi-global-search{min-width:0!important}.pi-global-search input{min-width:0!important}}
 @media(max-width:390px){.pi-global-search{flex-basis:72px!important}.pi-top-user .header-avatar{width:25px!important;height:25px!important}}
+
+/* Reparaciones verificadas por axe: inventario, SKU y panel de contexto del asistente */
+.pi-inventory .pi-inventory-list tbody tr,.pi-inventory .pi-inventory-list tbody tr:nth-child(odd),.pi-inventory .pi-inventory-list tbody tr:nth-child(even){background:#1e1d1b!important}
+.pi-inventory .pi-inventory-list tbody tr.selected,.pi-inventory .pi-inventory-list tbody tr.selected:nth-child(even){background:#3d2c16!important}
+.pi-inventory .pi-inventory-list tbody tr:hover{background:#40301c!important}
+.pi-inventory .pi-inventory-list td,.pi-inventory .pi-inventory-list td b,.pi-inventory .pi-inventory-list td strong{background:transparent!important;color:#f5f2eb!important}
+.pi-inventory .pi-inventory-list td code,.view-products .table-wrap td code,.view-products .responsive-cards td code{color:#e8bc68!important;background:#302519!important}
+.view-products .table-wrap tbody tr td code{color:#e8bc68!important}
+.view-ai .billing-disclaimer,.view-ai .copilot-context-heading,.view-ai .copilot-context-card{background:#24221d!important;color:#f4ead8!important;border-color:#5b492e!important}
+.view-ai .billing-disclaimer strong,.view-ai .copilot-context-heading h3{color:#f2e9d8!important}
+.view-ai .copilot-context-heading .eyebrow{color:#f0be57!important}
+.view-ai .copilot-context-heading p,.view-ai .copilot-context-card p,.view-ai .billing-disclaimer span{color:#d0c2ac!important}
