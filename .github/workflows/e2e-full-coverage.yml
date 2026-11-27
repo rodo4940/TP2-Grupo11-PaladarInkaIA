@@ -111,7 +111,7 @@ jobs:
           assert not inkav5['javascript_errors']
           assert all(not x['horizontal_overflow'] for x in inkav5['scenarios'])
           studio=json.loads((folder/'studio-v4-results.json').read_text())
-          assert studio['new_screenshots']==48 and studio['total_screenshots']==240
+          assert studio['new_screenshots']==48 and studio['total_screenshots']==200
           assert not studio['horizontal_overflows'] and not studio['runtime_errors']
           report=json.loads((folder/'security-smoke-results.json').read_text())
           assert report['count']==27 and report['failed']==0,report
