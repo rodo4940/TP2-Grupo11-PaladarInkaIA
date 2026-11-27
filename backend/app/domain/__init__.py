@@ -1,0 +1,1 @@
+"""Dominio transaccional de El Paladar del Inka."""

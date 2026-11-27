@@ -1,0 +1,47 @@
+name: Verified Download Package - Paladar Inka AI
+on:
+  push:
+    branches:
+      - feature/mvp-demostrable-qa-20261126
+      - release/paladar-inka-v1-piloto
+    paths:
+      - "scripts/**"
+      - "backend/**"
+      - "frontend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/distribution-package.yml"
+      - "INICIAR_WINDOWS.bat"
+      - "README.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate installation from a fresh clone
+        run: bash scripts/start.sh
+      - name: Verify backend, frontend and business transactions
+        run: |
+          bash scripts/verify.sh
+          python3 scripts/qa-smoke.py
+      - name: Package exactly the version under test
+        run: |
+          mkdir -p dist
+          git archive --format=zip --output=dist/Paladar_Inka_AI_Piloto_Verificado.zip HEAD
+          printf "Paladar Inka AI - paquete de instalación desde repositorio Git\nVersion SHA: %s\nAlcance: piloto técnico local, no despliegue empresarial autorizado\nIniciar Windows: INICIAR_WINDOWS.bat\nIniciar Linux/WSL/macOS: bash scripts/start.sh\n" "$GITHUB_SHA" > dist/BUILD_INFO.txt
+          sha256sum dist/Paladar_Inka_AI_Piloto_Verificado.zip > dist/SHA256SUMS.txt
+      - name: Upload verified package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Paladar-Inka-AI-Instalador-Verificado
+          path: dist/
+          retention-days: 90
+      - name: Show logs only if installation fails
+        if: failure()
+        run: docker compose logs --tail=80 backend frontend db || true
+      - name: Clean up CI containers
+        if: always()
+        run: docker compose down --volumes --remove-orphans || true

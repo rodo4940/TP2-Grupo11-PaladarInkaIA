@@ -1,0 +1,73 @@
+# Producción: uso solo tras completar docs/RELEASE_READINESS.md.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:?Set DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER:?Set DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+    expose: ["5432"]
+    volumes:
+      - paladar_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt: ["no-new-privileges:true"]
+  backend:
+    build: {context: ./backend, dockerfile: Dockerfile.prod}
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      APP_NAME: "Paladar Inka API"
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:?Set DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER:?Set DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      TOKEN_TTL_MINUTES: ${TOKEN_TTL_MINUTES:-60}
+      LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-5}
+      LOGIN_LOCKOUT_MINUTES: ${LOGIN_LOCKOUT_MINUTES:-15}
+      CORS_ORIGINS: https://${PALADAR_DOMAIN:?Set PALADAR_DOMAIN}
+      API_V1_PREFIX: /api/v1
+      # Opcional: sin ambos valores, el asistente usa reglas locales.
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+    expose: ["8000"]
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready',timeout=4)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 25s
+  frontend:
+    build: {context: ./frontend, dockerfile: Dockerfile.prod}
+    restart: unless-stopped
+    expose: ["8080"]
+    security_opt: ["no-new-privileges:true"]
+  edge:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      PALADAR_DOMAIN: ${PALADAR_DOMAIN:?Set PALADAR_DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - paladar_caddy_data:/data
+      - paladar_caddy_config:/config
+    depends_on:
+      backend: {condition: service_healthy}
+      frontend: {condition: service_started}
+volumes:
+  paladar_db:
+  paladar_caddy_data:
+  paladar_caddy_config:

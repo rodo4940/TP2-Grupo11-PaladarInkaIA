@@ -1,53 +1,224 @@
-import { useEffect, useState } from 'react';
+import './reference-finish.css';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import type {FormEvent, ReactNode} from 'react';
+import {api, post, patch, put, ApiError} from './services/api';
+import {SupportCenter} from './components/SupportCenter';
+import {SectionArtwork} from './components/SectionArtwork';
+import {MobileDock} from './components/MobileDock';
+import {InkaBrand} from './components/InkaBrand';
+import {BillingCenter} from './components/BillingCenter';
+import {BusinessCopilot} from './components/BusinessCopilot';
+import {TrainedDemoPanel} from './components/TrainedDemoPanel';
+import {ReferenceDashboard} from './components/ReferenceDashboard';
+import {ReferencePOS} from './components/ReferencePOS';
+import {ReferenceKitchen} from './components/ReferenceKitchen';
+import {ReferenceOrders} from './components/ReferenceOrders';
+import {ReferenceInventory} from './components/ReferenceInventory';
+import {HERO_PHOTO, productImage} from './assets/menuPhotos';
+import type {AuthResponse, User, Role, Product, Ingredient, Customer, Order, OrderStatus, StockMovement, Dashboard, Report, Recommendation, Forecast, Audit, SystemInfo, CustomerInsights, InternalReceipt} from './types/domain';
 
-import { getHealth } from './services/api';
+type View = 'dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings'|'billing';
+type Session={token:string;user:User};
+type Flash={text:string;type:'error'|'success'} | null;
+const money=(c:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(c/100);
+const shortTime=(x:string)=>new Date(x).toLocaleString('es-PE',{dateStyle:'short',timeStyle:'short'});
+const labels: Record<OrderStatus,string>={pending:'Pendiente',preparing:'En preparación',ready:'Listo para entregar',delivered:'Entregado',cancelled:'Cancelado'};
+const tabs: Array<{id:View;label:string;icon:string;roles:Role[]}>= [
+{id:'dashboard',label:'Dashboard',icon:'◈',roles:['admin','cashier','kitchen']},
+{id:'pos',label:'Ventas (POS)',icon:'▣',roles:['admin','cashier']},
+{id:'billing',label:'Finanzas / Caja',icon:'▤',roles:['admin','cashier']},
+{id:'orders',label:'Pedidos',icon:'▤',roles:['admin','cashier','kitchen']},
+{id:'kitchen',label:'Cocina',icon:'♨',roles:['admin','kitchen']},
+{id:'inventory',label:'Inventario',icon:'▧',roles:['admin','cashier','kitchen']},
+{id:'products',label:'Productos',icon:'◈',roles:['admin','cashier']},
+{id:'customers',label:'Clientes',icon:'♙',roles:['admin','cashier']},
+{id:'reports',label:'Reportes',icon:'▥',roles:['admin','cashier']},
+{id:'ai',label:'IA y recomendaciones',icon:'✦',roles:['admin','cashier']},
+{id:'users',label:'Usuarios',icon:'♧',roles:['admin']},
+{id:'settings',label:'Configuración',icon:'⚙',roles:['admin','cashier','kitchen']},
+];
+const icons:Record<View,ReactNode>={
+ dashboard:<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
+ pos:<><path d="m3 4 2 1 2 12h12l2-9H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></>,
+ billing:<><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
+ orders:<><path d="M8 3h8l2 3v15H6V6l2-3Z"/><path d="M9 10h6M9 14h6M9 18h4"/></>,
+ kitchen:<><path d="M4 14c-1-3 0-6 3-7 1-4 7-4 8 0 4-1 7 2 6 6"/><path d="M5 15v5h14v-5M8 5v3M13 4v4"/></>,
+ inventory:<><path d="M3 7 12 3l9 4v11l-9 4-9-4V7Z"/><path d="m3 7 9 4 9-4M12 11v11M7 5l10 5"/></>,
+ products:<><path d="M12 2 22 7v10l-10 5L2 17V7L12 2Z"/><path d="M2 7l10 5 10-5M12 12v10"/></>,
+ customers:<><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 11a3 3 0 0 0 0-6M18 15a5 5 0 0 1 3 5"/></>,
+ reports:<><path d="M4 21V5M4 21h17M9 17V9M14 17V5M19 17v-7"/></>,
+ ai:<><path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2Z"/></>,
+ users:<><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></>,
+ settings:<><circle cx="12" cy="12" r="3"/><path d="m9.5 2.5.5 2.3a8 8 0 0 1 4 0l.5-2.3 2.4 1.4-1 2a8 8 0 0 1 2.8 2.8l2-1 1.4 2.4-2.3.5a8 8 0 0 1 0 4l2.3.5-1.4 2.4-2-1a8 8 0 0 1-2.8 2.8l1 2-2.4 1.4-.5-2.3a8 8 0 0 1-4 0l-.5 2.3-2.4-1.4 1-2a8 8 0 0 1-2.8-2.8l-2 1-1.4-2.4 2.3-.5a8 8 0 0 1 0-4l-2.3-.5 1.4-2.4 2 1a8 8 0 0 1 2.8-2.8l-1-2 2.4-1.4Z"/></>
+};
+function NavGlyph({id}:{id:View}){return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icons[id]}</svg>}
+function Field({title,children}:{title:string;children:ReactNode}){return <label className="field"><span>{title}</span>{children}</label>}
+function Empty({text}:{text:string}){return <div className="empty empty-designed" role="status"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true" fill="none"><rect x="9" y="19" width="50" height="38" rx="12" fill="#f1e8d8"/><path d="M19 26h30v22H19z" fill="#faf5e9" stroke="#ceb38b" strokeWidth="2"/><path d="M27 34h14M27 41h9" stroke="#b18e65" strokeWidth="3" strokeLinecap="round"/><circle cx="49" cy="18" r="10" fill="#dfebdc"/><path d="m45 18 3 3 6-7" stroke="#4b8766" strokeWidth="2.5" strokeLinecap="round"/></svg><p>{text}</p></div>}
+function FoodPhoto({product,small=false}:{product:Product;small?:boolean}){const src=productImage(product);return <span className={`food-picture${small?' food-picture-small':''}`}><img loading="lazy" src={src??'/illustrations/pizza-artisan.svg'} alt={`Imagen ilustrativa de ${product.name}`} onError={e=>{e.currentTarget.src='/illustrations/pizza-artisan.svg'}}/>{!small&&<span className="food-top">IMAGEN REFERENCIAL</span>}</span>}
+function Tile({label,value,detail,icon}:{label:string;value:string|number;detail?:string;icon:string}){return <div className="tile"><span className="tile-icon">{icon}</span><span><small>{label}</small><strong>{value}</strong>{detail && <em>{detail}</em>}</span></div>}
 
-type ApiStatus = 'checking' | 'connected' | 'unavailable';
+function App(){
+ const [session,setSession]=useState<Session|null>(()=>{try{const v=sessionStorage.getItem('paladar_session');return v?JSON.parse(v) as Session:null}catch{return null}});
+ const [view,setView]=useState<View>('dashboard');
+ const [globalSearch,setGlobalSearch]=useState('');
+ const globalSearchRef=useRef<HTMLInputElement>(null);
+ useEffect(()=>{const shortcut=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();globalSearchRef.current?.focus();globalSearchRef.current?.select()}if(event.key==='Escape')setGlobalSearch('')};window.addEventListener('keydown',shortcut);return()=>window.removeEventListener('keydown',shortcut)},[]);
+ const [flash,setFlash]=useState<Flash>(null);
+ const [loading,setLoading]=useState(false);
+ const [dashboard,setDashboard]=useState<Dashboard|null>(null);
+ const [products,setProducts]=useState<Product[]>([]),[ingredients,setIngredients]=useState<Ingredient[]>([]),[orders,setOrders]=useState<Order[]>([]);
+ const [customers,setCustomers]=useState<Customer[]>([]),[movements,setMovements]=useState<StockMovement[]>([]);
+ const [report,setReport]=useState<Report|null>(null),[recommendation,setRecommendation]=useState<Recommendation|null>(null),[forecast,setForecast]=useState<Forecast|null>(null);
+ const [users,setUsers]=useState<User[]>([]),[audit,setAudit]=useState<Audit[]>([]),[system,setSystem]=useState<SystemInfo|null>(null);
+ const [form,setForm]=useState({username:'',password:''});
+ const [showPassword,setShowPassword]=useState(false);
+ const [currentOrder,setCurrentOrder]=useState<Order|null>(null);
+ const [productForm,setProductForm]=useState({sku:'',name:'',category:'Pizzas',price:'32'});
+ const [recipeProduct,setRecipeProduct]=useState(''),[recipeIngredient,setRecipeIngredient]=useState(''),[recipeQty,setRecipeQty]=useState('');
+ const [recipeDraft,setRecipeDraft]=useState<Array<{ingredient_id:number;amount:number}>>([]);
+ const [ingredientForm,setIngredientForm]=useState({sku:'',name:'',unit:'g',stock:'1000',minimum_stock:'250'});
+ const [customerForm,setCustomerForm]=useState({name:'',phone:'',notes:''});
+ const [userForm,setUserForm]=useState({username:'',full_name:'',password:'',role:'cashier'});
+ const [customerSearch,setCustomerSearch]=useState('');
+ const [mobileNav,setMobileNav]=useState(false);
+ const mobileMenuRef=useRef<HTMLButtonElement>(null);
+ const sidebarCloseRef=useRef<HTMLButtonElement>(null);
+ const [helpOpen,setHelpOpen]=useState(false);
+ const [connection,setConnection]=useState<'checking'|'online'|'error'>('checking');
+ const [syncedAt,setSyncedAt]=useState<string>('');
 
-function App() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    getHealth()
-      .then(() => {
-        if (isMounted) {
-          setApiStatus('connected');
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setApiStatus('unavailable');
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const statusLabel = {
-    checking: 'Verificando',
-    connected: 'Conectada',
-    unavailable: 'No disponible',
-  }[apiStatus];
-
-  return (
-    <main className="app-shell">
-      <section className="intro">
-        <p className="eyebrow">Taller de Proyectos 2</p>
-        <h1>Paladar Inka AI</h1>
-        <p className="description">
-          Sistema de gestion de ventas, inventario y atencion al cliente.
-        </p>
-        <div className={`api-status api-status--${apiStatus}`}>
-          <span className="status-dot" aria-hidden="true" />
-          <span>Estado de API: {statusLabel}</span>
-        </div>
-      </section>
-    </main>
-  );
+ const [fullProducts,setFullProducts]=useState<Product[]>([]);
+ const [editProductId,setEditProductId]=useState('');
+ const [editProductForm,setEditProductForm]=useState({name:'',category:'',price:'',active:true});
+ const [selectedCustomer,setSelectedCustomer]=useState<Customer|null>(null);
+ const [customerInsights,setCustomerInsights]=useState<CustomerInsights|null>(null);
+ const [customerEdit,setCustomerEdit]=useState({name:'',phone:'',notes:''});
+ const [passwordForm,setPasswordForm]=useState({current:'',next:'',confirm:''});
+ const [receipt,setReceipt]=useState<InternalReceipt|null>(null);
+ // Drawer: bloquea el scroll de fondo, atrapa Tab y restaura el foco.
+ // Evita que elementos del panel sean alcanzables detrás del menú móvil.
+ useEffect(()=>{
+   if(!session || !mobileNav || !window.matchMedia('(max-width:880px)').matches)return;
+   const beforeOverflow=document.body.style.overflow;
+   document.body.style.overflow='hidden';
+   sidebarCloseRef.current?.focus();
+   const onKey=(event:KeyboardEvent)=>{
+     if(event.key==='Escape'){event.preventDefault();setMobileNav(false);return;}
+     if(event.key!=='Tab')return;
+     const nodes=[...document.querySelectorAll<HTMLElement>('#app-navigation button:not(:disabled),#app-navigation [href],#app-navigation [tabindex]:not([tabindex="-1"])')]
+       .filter(node=>node.getClientRects().length>0);
+     if(!nodes.length)return;
+     const first=nodes[0],last=nodes[nodes.length-1];
+     if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+     if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+   };
+   document.addEventListener('keydown',onKey);
+   return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=beforeOverflow;mobileMenuRef.current?.focus();}
+ },[mobileNav,session?.user.id]);
+ const token=session?.token||''; const role=session?.user.role;
+ const notify=(text:string,type:'error'|'success'='success')=>setFlash({text,type});
+ const logout=()=>{sessionStorage.removeItem('paladar_session');setSession(null);setView('dashboard');setFlash(null);setHelpOpen(false);setConnection('checking')};
+ const refresh=useCallback(async()=>{
+  if(!session) return;
+  setLoading(true);
+  setConnection('checking');
+  const t=session.token;
+  try{
+    const common=await Promise.all([
+      api<Dashboard>('/dashboard',t),api<Product[]>('/products',t),api<Ingredient[]>('/ingredients',t),api<Order[]>('/orders',t),api<StockMovement[]>('/inventory/movements',t)
+    ]);
+    setDashboard(common[0]);setProducts(common[1]);setIngredients(common[2]);setOrders(common[3]);setMovements(common[4]);
+    if(session.user.role!=='kitchen'){
+      const [c,r,rec,fc]=await Promise.all([
+        api<Customer[]>('/customers',t),api<Report>('/reports/sales',t),api<Recommendation>('/recommendations',t),api<Forecast>('/ai/demand-forecast',t)
+      ]);
+      setCustomers(c);setReport(r);setRecommendation(rec);setForecast(fc);
+    }
+    if(session.user.role==='admin'){
+      const [u,a,s,allProducts]=await Promise.all([api<User[]>('/users',t),api<Audit[]>('/audit',t),api<SystemInfo>('/system/info',t),api<Product[]>('/products/manage',t)]);
+      setUsers(u);setAudit(a);setSystem(s);setFullProducts(allProducts);
+    }
+    setConnection('online');
+    setSyncedAt(new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){setConnection('error');if(e instanceof ApiError&&e.status===401){logout();notify('La sesión expiró. Ingresa de nuevo.','error');return;}notify(e instanceof Error?e.message:'Error actualizando datos','error');}
+  finally{setLoading(false)}
+ },[session]);
+ useEffect(()=>{void refresh()},[refresh]);
+ useEffect(()=>{
+   if(!session) return;
+   const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},60000);
+   return ()=>window.clearInterval(timer);
+ },[refresh,session]);
+ useEffect(()=>{
+   if(!session)return;
+   const onKey=(event:KeyboardEvent)=>{
+     if(event.key==='Escape'){setHelpOpen(false);setMobileNav(false);setReceipt(null);return;}
+     const node=event.target as HTMLElement|null;
+     if(node?.closest('input,textarea,select,[contenteditable=true]')||!event.altKey||event.ctrlKey||event.metaKey)return;
+     const selected:Partial<Record<string,View>>={'1':'dashboard','2':'pos','3':'orders','4':'kitchen'};
+     const next=selected[event.key];
+     if(next&&tabs.some(tab=>tab.id===next&&tab.roles.includes(session.user.role))){event.preventDefault();setView(next);setMobileNav(false);setHelpOpen(false);}
+   };
+   window.addEventListener('keydown',onKey);
+   return ()=>window.removeEventListener('keydown',onKey);
+ },[session]);
+ useEffect(()=>{
+  if(!session)return;
+  const frame=requestAnimationFrame(()=>{
+   document.getElementById('main-content')?.focus({preventScroll:true});
+   window.scrollTo({top:0,behavior:'auto'});
+  });
+  return ()=>cancelAnimationFrame(frame);
+ },[session?.user.id,view]);
+ const perform=async(fn:()=>Promise<unknown>, message:string, after?:()=>void)=>{
+  setLoading(true);
+  try{await fn();after?.();notify(message);await refresh()}catch(e){notify(e instanceof Error?e.message:'Error al procesar','error')}finally{setLoading(false)}
+ };
+ const visibleCustomers=customers.filter(c=>`${c.name} ${c.phone||''}`.toLowerCase().includes(customerSearch.toLowerCase().trim()));
+ const exportCSV=(filename:string,headers:string[],rows:(string|number)[][])=>{
+   const escape=(v:string|number)=>`"${String(v).replaceAll('"','""')}"`;
+   const csv='\uFEFF'+[headers,...rows].map(row=>row.map(escape).join(';')).join('\r\n');
+   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+   const link=document.createElement('a');link.href=url;link.download=filename;link.click();URL.revokeObjectURL(url);
+ };
+ const isAdmin=role==='admin';
+ const roleLabel={admin:'Administración',cashier:'Caja',kitchen:'Cocina'};
+ const changeOrderStatus=(o:Order,status:OrderStatus)=>perform(()=>patch(`/orders/${o.id}/status`,{status},token),`Pedido #${o.id} actualizado a ${labels[status]}`);
+ const fetchCustomer=async(customer:Customer)=>{setSelectedCustomer(customer);setCustomerEdit({name:customer.name,phone:customer.phone||'',notes:customer.notes||''});setCustomerInsights(null);
+   try{setCustomerInsights(await api<CustomerInsights>(`/customers/${customer.id}/insights`,token))}catch(e){notify(e instanceof Error?e.message:'Error consultando al cliente','error')}
+ };
+ const showReceipt=async(id:number)=>{try{setReceipt(await api<InternalReceipt>(`/orders/${id}/receipt`,token))}catch(e){notify(e instanceof Error?e.message:'No existe ticket de este pedido','error')}};
+ const selectProduct=(id:string)=>{setEditProductId(id);const product=fullProducts.find(x=>String(x.id)===id);if(product)setEditProductForm({name:product.name,category:product.category,price:(product.price_cents/100).toFixed(2),active:product.active})};
+ async function signIn(e:FormEvent<HTMLFormElement>){e.preventDefault();setLoading(true);setFlash(null);
+  try{const result=await api<AuthResponse>('/auth/token',undefined,{method:'POST',body:JSON.stringify(form)});
+    const next={token:result.access_token,user:result.user};sessionStorage.setItem('paladar_session',JSON.stringify(next));setSession(next);setForm({username:'',password:''});}
+  catch(e){notify(e instanceof Error?e.message:'No fue posible ingresar','error')}
+  finally{setLoading(false)}
+ }
+ if(!session) return <div className="login-shell reference-login" style={{backgroundImage:`linear-gradient(90deg,rgba(0,0,0,.48),rgba(0,0,0,.88)),url(${HERO_PHOTO})`}}><div className="login-brand"><span className="brand-symbol"><InkaBrand size={47}/></span><span className="brand-word">EL PALADAR <b>DEL INKA</b><small>Ventas · Cocina · Inventario</small></span></div><div className="login-layout"><div className="login-intro"><span className="eyebrow">El Paladar del Inka · Pizzería</span><h1><em>✦ Paladar Inka AI</em></h1><p>La plataforma inteligente para la gestión integral de tu pizzería.</p><div className="login-features"><span>▣ Ventas sincronizadas</span><span>♨ Flujo de cocina</span><span>▧ Kardex trazable</span><span>✦ Analítica explicable</span></div><figure className="login-hero-photo"><img src={HERO_PHOTO} alt="Imagen ilustrativa de pizza artesanal recién horneada" decoding="async" onError={e=>{if(e.currentTarget.dataset.fallback!=='illustration'){e.currentTarget.dataset.fallback='illustration';e.currentTarget.src='/illustrations/pizza-artisan.svg'}}}/><figcaption>Tradición en cada pedido · Imagen de referencia</figcaption></figure></div><form className="login-card" onSubmit={signIn}><span className="card-eyebrow">ACCESO AL SISTEMA</span><h2>Inicia sesión en tu cuenta</h2><p>Inicia sesión con tu cuenta de trabajo.</p><Field title="Usuario"><input autoComplete="username" required value={form.username} onChange={e=>setForm({...form,username:e.target.value})} placeholder="Usuario asignado"/></Field><Field title="Contraseña"><input type={showPassword?"text":"password"} autoComplete="current-password" required value={form.password} onChange={e=>setForm({...form,password:e.target.value})} placeholder="Contraseña"/></Field><button type="button" className="secondary" onClick={()=>setShowPassword(v=>!v)}>{showPassword?"Ocultar contraseña":"Mostrar contraseña"}</button><button className="primary full" type="submit" disabled={loading}>{loading?'Conectando…':'Iniciar sesión →'}</button>{flash && <div className={`notice ${flash.type}`}>{flash.text}</div>}<p className="login-note">Acceso protegido. Solicita tus credenciales al administrador.</p></form></div><footer className="login-footer">EL PALADAR DEL INKA · Plataforma de gestión</footer></div>;
+ return <div className="layout"><a href="#main-content" className="skip-link">Saltar al contenido principal</a>{mobileNav&&<button className="mobile-overlay" aria-label="Cerrar menú" onClick={()=>setMobileNav(false)}/>}<aside id="app-navigation" aria-label="Navegación principal" className={`sidebar ${mobileNav?'sidebar-open':''}`}><div className="sidebar-head"><span className="brand-symbol"><InkaBrand size={47}/></span><div><strong>El Paladar <b>del Inka</b></strong><small>PIZZERÍA</small></div><button ref={sidebarCloseRef} type="button" className="sidebar-close-btn" aria-label="Cerrar navegación" onClick={()=>setMobileNav(false)}>×</button></div><p className="sidebar-section">OPERACIONES</p><nav>{tabs.filter(x=>x.roles.includes(session.user.role)).map(x=><button key={x.id} aria-current={view===x.id?'page':undefined} className={`nav-item ${view===x.id?'active':''}`} onClick={()=>{setView(x.id);setFlash(null);setMobileNav(false)}}><span className="nav-icon"><NavGlyph id={x.id}/></span><span>{x.label}</span></button>)}</nav><div className="sidebar-bottom"><div className={`online ${connection==='error'?'online-warning':''}`}><i></i> {connection==='online'?'API conectada':connection==='checking'?'Sincronizando…':'Revisar conexión'} <button aria-label="Actualizar datos" title="Actualizar datos" onClick={()=>void refresh()}>↻</button></div><div className="profile"><span className="avatar">{session.user.full_name.charAt(0).toUpperCase()}</span><div><b>{session.user.full_name}</b><small>{roleLabel[session.user.role]}</small></div><button onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión">↪</button></div></div></aside><div className="main-frame"><header className="topbar">
+ <button ref={mobileMenuRef} type="button" className="mobile-menu-btn" aria-controls="app-navigation" aria-expanded={mobileNav} aria-label={mobileNav?"Cerrar menú":"Abrir menú"} onClick={()=>setMobileNav(!mobileNav)}>☰</button>
+ <div className="pi-topbar-brand"><InkaBrand size={33}/><strong>✦ Paladar <span>Inka</span> AI</strong><small>Sistema de Gestión de Restaurante</small></div>
+ <div className="pi-global-search"><span aria-hidden="true" className="pi-search-symbol">⌕</span><input ref={globalSearchRef} type="search" aria-label="Buscar módulo del sistema" value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){const matching=tabs.find(t=>t.roles.includes(session.user.role)&&t.label.toLowerCase().includes(globalSearch.trim().toLowerCase()));if(matching){setView(matching.id);setGlobalSearch('');e.currentTarget.blur()}}}} placeholder="Buscar pedidos, clientes, productos, módulos..." /><kbd>Ctrl + K</kbd>
+  {globalSearch.trim()&&<div className="pi-search-results" role="listbox" aria-label="Módulos coincidentes">{tabs.filter(t=>t.roles.includes(session.user.role)&&t.label.toLowerCase().includes(globalSearch.trim().toLowerCase())).map(t=><button key={t.id} onClick={()=>{setView(t.id);setGlobalSearch('');globalSearchRef.current?.blur()}}><span className="pi-search-result-icon"><NavGlyph id={t.id}/></span><span>{t.label}<small>Abrir módulo del sistema</small></span></button>)}{!tabs.some(t=>t.roles.includes(session.user.role)&&t.label.toLowerCase().includes(globalSearch.trim().toLowerCase()))&&<p className="pi-muted">Sin módulos coincidentes. Busca por el nombre de una sección.</p>}</div>}
+ </div>
+ <div className="top-actions"><span className={`environment ${connection==='error'?'environment-warning':''}`}><i></i> {connection==='online'?'Datos sincronizados':connection==='checking'?'Sincronizando…':'Sin conexión'}</span><button className="header-guide" onClick={()=>setHelpOpen(true)} aria-label="Abrir ayuda y atajos">?</button><button className="pi-top-alert" aria-label="Consultar alertas de inventario" onClick={()=>setView('inventory')}>♧{Boolean(dashboard?.low_stock.length)&&<b>{dashboard?.low_stock.length}</b>}</button><button className="btn-ghost" aria-label={loading?'Cargando datos':'Actualizar datos'} disabled={loading} onClick={()=>void refresh()}>↻</button><button className="pi-top-user" onClick={()=>setView('settings')} title="Configuración de usuario"><span className="header-avatar">{session.user.full_name.charAt(0).toUpperCase()}</span><span><strong>{session.user.full_name}</strong><small>{roleLabel[session.user.role]}</small></span><span aria-hidden="true">⌄</span></button></div>
+ </header>{connection==='error'&&<div className="connection-alert" role="status"><span className="connection-alert-mark" aria-hidden="true">!</span><span><strong>No se pudo sincronizar la información</strong><small>Se conservan los datos de la última consulta. Comprueba la conexión y vuelve a intentar.</small></span><button type="button" className="secondary" onClick={()=>void refresh()} disabled={loading}>Reintentar ↻</button></div>}{flash&&<div role="alert" aria-live="assertive" className={`notice ${flash.type} top-notice`}><span>{flash.text}</span><button onClick={()=>setFlash(null)}>×</button></div>}<main className={`content view-${view}`} id="main-content" tabIndex={-1}>
+{view==='dashboard'&&<ReferenceDashboard data={dashboard} orders={orders} report={report} role={session.user.role} user={session.user.full_name} refreshedAt={syncedAt} onNavigate={setView}/>}
+{view==='pos'&&<ReferencePOS products={products} customers={customers} token={token} initialOrder={currentOrder} onRefresh={refresh} onNavigate={setView}/>}
+{view==='billing'&&<BillingCenter token={token} role={role ?? 'cashier'} userId={session?.user.id ?? 0}/>}
+{view==='orders'&&<ReferenceOrders orders={orders} role={session.user.role} busy={loading} onChange={changeOrderStatus} onCash={o=>{setCurrentOrder(o);setView('pos')}} onReceipt={id=>void showReceipt(id)}/>}
+{view==='kitchen'&&<ReferenceKitchen orders={orders} busy={loading} onChange={changeOrderStatus} onRefresh={refresh}/>}
+{view==='inventory'&&<ReferenceInventory ingredients={ingredients} movements={movements} orders={orders} dashboard={dashboard} admin={isAdmin} busy={loading} token={token} onRefresh={refresh}/>}
+{view==='products'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">CATÁLOGO Y PRODUCCIÓN</span><h1>Productos y recetas</h1><p>Cada pizza necesita una receta antes de poder venderse.</p></div></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Catálogo</h3><span>{products.length} productos</span></div><div className="table-wrap responsive-cards products-mobile-cards"><table><thead><tr><th>SKU</th><th>Producto</th><th>Categoría</th><th>Precio</th></tr></thead><tbody>{products.map(p=><tr key={p.id}><td data-label="SKU"><code>{p.sku}</code></td><td data-label="Producto"><span className="catalog-product-cell"><FoodPhoto product={p} small/><b>{p.name}</b></span></td><td data-label="Categoría">{p.category}</td><td data-label="Precio"><b>{money(p.price_cents)}</b></td></tr>)}</tbody></table></div></section><section className="panel"><div className="panel-head"><h3>Nuevo producto</h3></div>{isAdmin?<form className="stack-form" onSubmit={e=>{e.preventDefault();void perform(()=>post('/products',{sku:productForm.sku,name:productForm.name,category:productForm.category,price_cents:Math.round(Number(productForm.price)*100)},token),'Producto creado. Registra ahora su receta.',()=>setProductForm({sku:'',name:'',category:'Pizzas',price:'32'}))}}><Field title="SKU"><input required value={productForm.sku} onChange={e=>setProductForm({...productForm,sku:e.target.value})}/></Field><Field title="Nombre del producto"><input required minLength={2} value={productForm.name} onChange={e=>setProductForm({...productForm,name:e.target.value})}/></Field><Field title="Categoría"><input required value={productForm.category} onChange={e=>setProductForm({...productForm,category:e.target.value})}/></Field><Field title="Precio (S/)"><input required type="number" min="0" step="0.01" value={productForm.price} onChange={e=>setProductForm({...productForm,price:e.target.value})}/></Field><button className="primary">Registrar producto</button></form>:<Empty text="Solo administración puede registrar productos y recetas."/>}</section></div>{isAdmin&&<div className="two-col"><section className="panel"><div className="panel-head"><h3>Asignación de receta</h3><p>Agrega todos los ingredientes y confirma la receta completa.</p></div><div className="stack-form"><Field title="Producto"><select required value={recipeProduct} onChange={e=>{setRecipeProduct(e.target.value);setRecipeDraft([])}}><option value="">Seleccionar producto</option>{products.map(p=><option value={p.id} key={p.id}>{p.name}</option>)}</select></Field><Field title="Insumo"><select value={recipeIngredient} onChange={e=>setRecipeIngredient(e.target.value)}><option value="">Seleccionar insumo</option>{ingredients.map(i=><option value={i.id} key={i.id}>{i.name} ({i.unit})</option>)}</select></Field><Field title="Cantidad por unidad"><input type="number" min="1" value={recipeQty} onChange={e=>setRecipeQty(e.target.value)}/></Field><button className="secondary full" disabled={!recipeIngredient||!recipeQty||Number(recipeQty)<=0||recipeDraft.some(x=>x.ingredient_id===Number(recipeIngredient))} onClick={()=>{setRecipeDraft(old=>[...old,{ingredient_id:Number(recipeIngredient),amount:Number(recipeQty)}]);setRecipeIngredient('');setRecipeQty('')}}>+ Agregar insumo</button><div className="recipe-list">{recipeDraft.map(x=><div key={x.ingredient_id}><span>{ingredients.find(i=>i.id===x.ingredient_id)?.name||x.ingredient_id} · {x.amount}</span><button onClick={()=>setRecipeDraft(old=>old.filter(y=>y.ingredient_id!==x.ingredient_id))}>Eliminar</button></div>)}</div><p className="microcopy">Se reemplaza la receta anterior completa. Verifica cantidades antes de guardar.</p><button className="primary full" disabled={!recipeProduct||recipeDraft.length===0} onClick={()=>void perform(()=>put(`/products/${Number(recipeProduct)}/recipe`,recipeDraft,token),'Receta completa actualizada',()=>setRecipeDraft([]))}>Guardar receta de {recipeDraft.length} ingredientes</button></div></section><section className="panel"><div className="panel-head"><h3>Nuevo insumo</h3></div><form className="stack-form" onSubmit={e=>{e.preventDefault();void perform(()=>post('/ingredients',{sku:ingredientForm.sku,name:ingredientForm.name,unit:ingredientForm.unit,stock:Number(ingredientForm.stock),minimum_stock:Number(ingredientForm.minimum_stock)},token),'Insumo registrado',()=>setIngredientForm({sku:'',name:'',unit:'g',stock:'1000',minimum_stock:'250'}))}}><Field title="SKU"><input required value={ingredientForm.sku} onChange={e=>setIngredientForm({...ingredientForm,sku:e.target.value})}/></Field><Field title="Nombre"><input required value={ingredientForm.name} onChange={e=>setIngredientForm({...ingredientForm,name:e.target.value})}/></Field><Field title="Unidad"><select value={ingredientForm.unit} onChange={e=>setIngredientForm({...ingredientForm,unit:e.target.value})}><option value="g">Gramos</option><option value="ml">Mililitros</option><option value="unit">Unidades</option></select></Field><Field title="Cantidad inicial"><input type="number" required min="0" value={ingredientForm.stock} onChange={e=>setIngredientForm({...ingredientForm,stock:e.target.value})}/></Field><Field title="Mínimo"><input type="number" required min="0" value={ingredientForm.minimum_stock} onChange={e=>setIngredientForm({...ingredientForm,minimum_stock:e.target.value})}/></Field><button className="primary">Registrar insumo</button></form></section></div>}</>}
+{view==='products'&&isAdmin&&<section className="panel top-gap"><div className="panel-head"><div><h3>Editar productos y disponibilidad</h3><p>Los precios nuevos no alteran el historial de pedidos. Desactivar impide futuras ventas.</p></div></div><form className="stack-form edit-grid" onSubmit={e=>{e.preventDefault();if(!editProductId)return;void perform(()=>patch(`/products/${editProductId}`,{name:editProductForm.name,category:editProductForm.category,price_cents:Math.round(Number(editProductForm.price)*100),active:editProductForm.active},token),'Producto actualizado',()=>{setEditProductId('');setEditProductForm({name:'',category:'',price:'',active:true})})}}><Field title="Producto a editar"><select required value={editProductId} onChange={e=>selectProduct(e.target.value)}><option value="">Seleccionar producto…</option>{fullProducts.map(p=><option key={p.id} value={p.id}>{p.sku} · {p.name}{p.active?'':' (INACTIVO)'}</option>)}</select></Field><Field title="Nombre"><input required minLength={2} disabled={!editProductId} value={editProductForm.name} onChange={e=>setEditProductForm({...editProductForm,name:e.target.value})}/></Field><Field title="Categoría"><input required minLength={2} disabled={!editProductId} value={editProductForm.category} onChange={e=>setEditProductForm({...editProductForm,category:e.target.value})}/></Field><Field title="Precio de venta (S/)"><input required type="number" min="0" step="0.01" disabled={!editProductId} value={editProductForm.price} onChange={e=>setEditProductForm({...editProductForm,price:e.target.value})}/></Field><label className="choice-label"><input type="checkbox" checked={editProductForm.active} disabled={!editProductId} onChange={e=>setEditProductForm({...editProductForm,active:e.target.checked})}/><span>Disponible para la venta</span></label><button className="primary" disabled={!editProductId||loading}>Guardar cambios</button></form></section>}
+{view==='customers'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">RELACIÓN CON CLIENTES</span><h1>Clientes</h1><p>Registro de personas y seguimiento asociado a sus pedidos.</p></div></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Clientes registrados</h3><span>{customers.length} personas</span></div><div className="table-toolbar"><input aria-label="Buscar cliente" value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="⌕ Buscar cliente por nombre o teléfono..."/></div><div className="table-wrap responsive-cards customers-mobile-cards"><table><thead><tr><th>ID</th><th>Nombre</th><th>Contacto</th><th>Pedidos</th></tr></thead><tbody>{visibleCustomers.map(c=><tr key={c.id}><td data-label="ID">#{c.id}</td><td data-label="Nombre"><b>{c.name}</b></td><td data-label="Contacto">{c.phone||'No indicado'}</td><td data-label="Historial"><button className="secondary" onClick={()=>void fetchCustomer(c)}>Ver historial ({orders.filter(o=>o.customer_id===c.id).length})</button></td></tr>)}</tbody></table>{!customers.length&&<Empty text="No hay clientes registrados."/>}</div></section><section className="panel"><div className="panel-head"><h3>Nuevo cliente</h3></div><form className="stack-form" onSubmit={e=>{e.preventDefault();void perform(()=>post('/customers',{name:customerForm.name,phone:customerForm.phone||null,notes:customerForm.notes||null},token),'Cliente registrado',()=>setCustomerForm({name:'',phone:'',notes:''}))}}><Field title="Nombre completo"><input required minLength={3} value={customerForm.name} onChange={e=>setCustomerForm({...customerForm,name:e.target.value})}/></Field><Field title="Teléfono (opcional)"><input value={customerForm.phone} onChange={e=>setCustomerForm({...customerForm,phone:e.target.value})}/></Field><Field title="Observación"><textarea rows={3} value={customerForm.notes} onChange={e=>setCustomerForm({...customerForm,notes:e.target.value})}/></Field><button className="primary">Guardar cliente</button></form></section></div></>}
+{view==='customers'&&selectedCustomer&&<section className="panel top-gap"><div className="panel-head"><div><h3>Ficha del cliente: {selectedCustomer.name}</h3><p>Los indicadores provienen de pedidos cobrados; los puntos son solo una referencia.</p></div><button className="secondary" onClick={()=>{setSelectedCustomer(null);setCustomerInsights(null)}}>Cerrar ficha</button></div>{customerInsights&&<><div className="tile-grid"><Tile label="Pedidos asociados" value={customerInsights.orders_total} icon="▤"/><Tile label="Pedidos pagados" value={customerInsights.orders_paid} icon="✓"/><Tile label="Compras confirmadas" value={money(customerInsights.spent_cents)} icon="S/"/><Tile label="Puntos indicativos" value={customerInsights.reference_points} icon="★"/></div><div className="two-col"><div><h4>Historial de operaciones</h4><div className="table-wrap responsive-cards customer-history-mobile-cards"><table><thead><tr><th>Pedido</th><th>Fecha</th><th>Total</th><th>Pagado</th></tr></thead><tbody>{customerInsights.history.map(o=><tr key={o.id}><td data-label="Pedido">#{o.id}</td><td data-label="Fecha">{shortTime(o.created_at)}</td><td data-label="Total">{money(o.total_cents)}</td><td data-label="Pagado">{o.paid?'Sí':'No'}</td></tr>)}</tbody></table></div><p className="microcopy top-gap">{customerInsights.points_disclaimer}</p></div><form className="stack-form" onSubmit={e=>{e.preventDefault();void perform(()=>patch(`/customers/${selectedCustomer.id}`,{name:customerEdit.name,phone:customerEdit.phone||null,notes:customerEdit.notes||null},token),'Cliente actualizado',()=>{setSelectedCustomer(null);setCustomerInsights(null)})}}><h4>Actualizar contacto</h4><Field title="Nombre"><input minLength={3} required value={customerEdit.name} onChange={e=>setCustomerEdit({...customerEdit,name:e.target.value})}/></Field><Field title="Teléfono"><input value={customerEdit.phone} onChange={e=>setCustomerEdit({...customerEdit,phone:e.target.value})}/></Field><Field title="Observación"><textarea rows={3} value={customerEdit.notes} onChange={e=>setCustomerEdit({...customerEdit,notes:e.target.value})}/></Field><button className="primary">Guardar ficha</button></form></div></>}</section>}
+{view==='reports'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">CONTROL COMERCIAL</span><h1>Reportes y análisis</h1><p>Solo se contabilizan pagos efectivamente registrados.</p></div><button className="secondary" onClick={()=>exportCSV('reporte_ventas_paladar_inka.csv',['Producto','Unidades vendidas'],(report?.top_products||[]).map(x=>[x.name,x.quantity]))}>↓ Exportar reporte CSV</button></div><div className="tile-grid"><Tile label="Ingresos confirmados" value={money(report?.sales_cents||0)} icon="S/"/><Tile label="Pedidos pagados" value={report?.paid_orders||0} icon="▤"/><Tile label="Ticket promedio" value={money(report?.paid_orders?Math.round(report.sales_cents/report.paid_orders):0)} icon="▥"/><Tile label="Productos destacados" value={report?.top_products.length||0} icon="★"/></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Productos más vendidos</h3><p>Cantidad acumulada en ventas pagadas</p></div>{report?.top_products.length?<div className="bar-list">{report.top_products.map(x=><div className="bar-line" key={x.name}><span>{x.name}</span><div><i style={{width:`${100*x.quantity/Math.max(1,report.top_products[0].quantity)}%`}}/></div><b>{x.quantity}</b></div>)}</div>:<Empty text="Los productos se muestran después del primer pago registrado."/>}</section><section className="panel"><div className="panel-head"><h3>Ventas por medio de pago</h3></div><div className="payment-list">{Object.entries(report?.by_method||{}).map(([method,cents])=><div key={method}><span>{({cash:'Efectivo',card:'Tarjeta',yape:'Yape',plin:'Plin'} as Record<string,string>)[method]||method}</span><b>{money(cents)}</b></div>)}</div></section></div></>}
+{view==='ai'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">APOYO A DECISIONES</span><h1>IA – Analítica Predictiva y Recomendaciones</h1><p>Recomendaciones interpretables y estimaciones descriptivas basadas en ventas pagadas.</p></div><span className="tag tag-preparing">ML entrenado solo en laboratorio</span></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Recomendaciones de menú</h3><p>Ranking por popularidad y disponibilidad</p></div>{recommendation?.items.length?recommendation.items.map((x,i)=><div key={x.product_id} className="recommendation"><span>{i+1}</span><div><b>{x.name}</b><p>{x.reason}</p><small>{x.orders_count} unidades vendidas · {money(x.price_cents)}</small></div></div>):<Empty text="No existen productos con receta y disponibilidad suficiente."/>}<div className="method-note"><b>Método:</b> {recommendation?.method.replaceAll('_',' ')||'Ranking heurístico'}. No usa entrenamiento de redes neuronales.</div></section><section className="panel"><div className="panel-head"><h3>Proyección orientativa</h3><p>Media móvil ponderada de 7 días</p></div><span className="tag tag-pending">Muestra: {forecast?.sample_paid_orders_7d||0} pagos</span><div className="forecast-list">{forecast?.items.map(x=><div key={x.product_id}><span><b>{x.name}</b><small>{x.units_by_day.join(' · ')} unidades/día</small></span><strong>{x.suggested_units_next_day}<small> estimadas</small></strong></div>)}</div><div className="method-note">{forecast?.limitations||'La calidad del pronóstico depende de la historia de ventas.'}</div></section></div><div className="reference-ai-grid"><TrainedDemoPanel token={token}/><BusinessCopilot token={token}/></div></>}
+{view==='users'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">ADMINISTRACIÓN Y SEGURIDAD</span><h1>Usuarios, Roles y Seguridad</h1><p>Los roles se validan dentro del backend para cada operación.</p></div></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Cuentas activas</h3><span>{users.length} registradas</span></div><div className="table-wrap responsive-cards users-mobile-cards"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{users.map(u=><tr key={u.id}><td data-label="Usuario"><b>{u.full_name}</b><small>@{u.username}</small></td><td data-label="Rol"><select aria-label={`Rol de ${u.username}`} disabled={u.id===session.user.id} value={u.role} onChange={e=>void perform(()=>patch(`/users/${u.id}/role`,{role:e.target.value},token),'Rol modificado')}>{(['admin','cashier','kitchen'] as Role[]).map(r=><option key={r} value={r}>{roleLabel[r]}</option>)}</select></td><td data-label="Estado"><span className={`tag ${u.active===false?'tag-critical':'tag-delivered'}`}>{u.active===false?'Inactivo':'Activo'}</span></td><td data-label="Acción"><button disabled={u.id===session.user.id} onClick={()=>void perform(()=>patch(`/users/${u.id}/active`,{active:u.active===false},token),'Estado de cuenta actualizado')}>{u.active===false?'Reactivar':'Desactivar'}</button></td></tr>)}</tbody></table></div></section><section className="panel"><div className="panel-head"><h3>Registrar colaborador</h3></div><form className="stack-form" onSubmit={e=>{e.preventDefault();void perform(()=>post('/users',userForm,token),'Cuenta de colaborador creada',()=>setUserForm({username:'',full_name:'',password:'',role:'cashier'}))}}><Field title="Usuario único"><input required minLength={3} value={userForm.username} onChange={e=>setUserForm({...userForm,username:e.target.value})}/></Field><Field title="Nombre completo"><input required minLength={3} value={userForm.full_name} onChange={e=>setUserForm({...userForm,full_name:e.target.value})}/></Field><Field title="Contraseña inicial (mín. 12 caracteres)"><input required minLength={12} type="password" autoComplete="new-password" value={userForm.password} onChange={e=>setUserForm({...userForm,password:e.target.value})}/></Field><Field title="Rol"><select value={userForm.role} onChange={e=>setUserForm({...userForm,role:e.target.value})}><option value="cashier">Caja</option><option value="kitchen">Cocina</option><option value="admin">Administración</option></select></Field><button className="primary">Crear cuenta</button></form></section></div><section className="panel"><div className="panel-head"><h3>Bitácora de auditoría</h3><p>Registro de acciones con usuario y fecha</p></div><div className="table-wrap responsive-cards audit-mobile-cards"><table><thead><tr><th>Fecha</th><th>Actor</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr></thead><tbody>{audit.slice(0,25).map(a=><tr key={a.id}><td data-label="Fecha">{shortTime(a.created_at)}</td><td data-label="Actor">#{a.actor_id}</td><td data-label="Acción"><code>{a.action}</code></td><td data-label="Entidad">{a.entity} #{a.entity_id}</td><td data-label="Detalle">{a.detail}</td></tr>)}</tbody></table></div></section></>}
+{view==='settings'&&<><div className="page-title module-heading"><SectionArtwork view={view}/><div><span className="eyebrow">AJUSTES Y TRAZABILIDAD</span><h1>Configuración general</h1><p>Información operativa consultada desde el backend.</p></div></div><div className="two-col"><section className="panel"><div className="panel-head"><h3>Sesión activa</h3></div><div className="kv-list"><div><span>Nombre</span><b>{session.user.full_name}</b></div><div><span>Cuenta</span><b>{session.user.username}</b></div><div><span>Rol</span><b>{roleLabel[session.user.role]}</b></div><div><span>Autorización</span><b>Bearer JWT con expiración</b></div></div><button className="secondary" onClick={logout}>Cerrar sesión</button></section><section className="panel"><div className="panel-head"><h3>Estado de la aplicación</h3></div><div className="kv-list"><div><span>API</span><b className={connection==='online'?'positive':connection==='error'?'negative':'muted'}>{connection==='online'?'Conectada':connection==='checking'?'Sincronizando':'No disponible'}</b></div><div><span>Última sincronización</span><b>{syncedAt||'Sin confirmar'}</b></div><div><span>Aplicación</span><b>{system?.app||'Paladar Inka AI'}</b></div><div><span>Versión</span><b>{system?.version||'1.0.0'}</b></div><div><span>Entorno</span><b>{system?.environment||'Acceso por API'}</b></div></div><div className="method-note">Los datos mostrados corresponden al entorno activo indicado arriba. Verifica la procedencia de los registros antes de utilizarlos para decisiones operativas.</div></section></div></>}
+{view==='settings'&&<section className="panel top-gap"><div className="panel-head"><div><h3>Actualizar mi contraseña</h3><p>Al guardar se invalidan inmediatamente todas las sesiones anteriores.</p></div></div><form className="stack-form" style={{maxWidth:490}} onSubmit={e=>{e.preventDefault();if(passwordForm.next!==passwordForm.confirm){notify('Las contraseñas nuevas no coinciden','error');return}void (async()=>{setLoading(true);try{await post('/auth/change-password',{current_password:passwordForm.current,new_password:passwordForm.next},token);setPasswordForm({current:'',next:'',confirm:''});logout()}catch(err){notify(err instanceof Error?err.message:'No se pudo cambiar la contraseña','error')}finally{setLoading(false)}})()}}><Field title="Contraseña actual"><input required type="password" autoComplete="current-password" value={passwordForm.current} onChange={e=>setPasswordForm({...passwordForm,current:e.target.value})}/></Field><Field title="Nueva contraseña (mínimo 12 caracteres)"><input required minLength={12} type="password" autoComplete="new-password" value={passwordForm.next} onChange={e=>setPasswordForm({...passwordForm,next:e.target.value})}/></Field><Field title="Confirmar contraseña"><input required minLength={12} type="password" autoComplete="new-password" value={passwordForm.confirm} onChange={e=>setPasswordForm({...passwordForm,confirm:e.target.value})}/></Field><button className="primary" disabled={loading}>Actualizar y cerrar sesiones</button></form></section>}
+{receipt&&<div className="receipt-overlay" role="dialog" aria-modal="true" aria-label="Ticket interno"><div className="receipt-sheet"><div className="receipt-controls"><button className="secondary" onClick={()=>setReceipt(null)}>Cerrar</button><button className="primary" onClick={()=>window.print()}>Imprimir ticket interno</button></div><div className="receipt-inka-brand"><InkaBrand size={66}/><div><h2>EL PALADAR DEL INKA</h2><small>Gastronomía &amp; tradición</small></div></div><p className="ticket-warning">DOCUMENTO INTERNO · NO ES COMPROBANTE DE SUNAT</p><p>Ticket interno de venta · Nº {receipt.order_id}</p><p>{shortTime(receipt.issued_at)} · {receipt.table_label}</p><div className="table-wrap"><table><thead><tr><th>Producto</th><th>Cant.</th><th>Importe</th></tr></thead><tbody>{receipt.items.map((i,index)=><tr key={index}><td>{i.name}</td><td>{i.quantity}</td><td>{money(i.subtotal_cents)}</td></tr>)}</tbody></table></div><div className="ticket-total">TOTAL {money(receipt.total_cents)}</div><p>Medio de pago: {receipt.method}</p><p className="ticket-warning">{receipt.disclaimer}</p></div></div>}</main><MobileDock view={view} role={session.user.role} onNavigate={next=>{setView(next);setFlash(null);setMobileNav(false)}}/><SupportCenter open={helpOpen} onClose={()=>setHelpOpen(false)} view={view} role={session.user.role}/><footer className="app-footer"><span>© El Paladar del Inka · Gestión comercial y operativa</span><span>Servicios conectados · {session.user.role}</span></footer></div></div>;
 }
-
 export default App;

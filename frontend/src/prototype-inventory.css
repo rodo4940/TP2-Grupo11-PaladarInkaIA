@@ -1,0 +1,48 @@
+/* Gestión de insumos y Kardex — diseño negro/oro, datos transaccionales. */
+.pi-inventory{display:flex;flex-direction:column;gap:13px}
+.pi-inventory-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pi-inventory-metrics>div{background:#191919;border:1px solid #453b2b;padding:17px;border-radius:10px;display:flex;gap:12px;align-items:center}
+.pi-inventory-metrics>div>span{color:#e8af39;background:#42301a;display:grid;place-items:center;width:40px;height:40px;border-radius:9px;font-size:24px}
+.pi-inventory-metrics small{font-size:11px;color:#aaa49a;display:block}.pi-inventory-metrics strong{font-size:23px;color:#f4efde}
+.pi-inventory-tools{display:flex;gap:15px;align-items:center;justify-content:space-between;border:1px solid #453a2e;border-radius:9px;background:#1b1b1b;padding:10px}
+.pi-inventory-filter{display:flex;gap:5px;min-width:0}
+.pi-inventory-filter button{border-radius:7px;padding:8px 11px;background:#2d2924;color:#e5d7c7;border:1px solid #473d31;font-size:12px}
+.pi-inventory-filter button.selected{background:linear-gradient(120deg,#b98324,#ebbc52);color:#211604;border-color:#e0b35d}
+.pi-inventory-tools>label{position:relative;min-width:180px;flex:0 1 350px}
+.pi-inventory-tools>label>span{position:absolute;left:13px;top:8px;font-size:20px;color:#e8b64b}
+.pi-inventory-tools input{min-height:39px;padding-left:38px!important}
+.pi-inventory-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,.82fr);gap:13px;align-items:start}
+.pi-inventory-list,.pi-inventory-detail{background:#191919;border:1px solid #453a2f;border-radius:11px;min-width:0;overflow:hidden}
+.pi-inventory-list header{padding:16px;border-bottom:1px solid #4a3c2b;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pi-inventory-list header h3{font-size:17px!important}
+.pi-inventory-list header span{color:#a9a097;font-size:11px}
+.pi-inventory-table-wrap{overflow:auto}
+.pi-inventory table{width:100%;border-collapse:collapse;min-width:580px}
+.pi-inventory th{text-align:left;background:#292622;padding:13px 10px;color:#ebbc59!important;font-size:11px;white-space:nowrap;border-bottom:1px solid #5c492d}
+.pi-inventory td{padding:13px 10px;color:#e8e1d5;font-size:12px;border-bottom:1px solid #343029}
+.pi-inventory tbody tr{cursor:pointer}.pi-inventory tbody tr:hover{background:#372819}.pi-inventory tbody tr.selected{background:#432f13}
+.pi-inventory code{color:#d9b77d}
+.pi-inventory-detail{padding:15px}
+.pi-inventory-detail>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pi-inventory-detail header span{color:#ddb368;font-size:10px;font-weight:800;letter-spacing:.15em}
+.pi-inventory-detail header h3{font-size:18px!important;margin-top:4px}
+.pi-inventory-detail header p{font-size:11px;color:#a99e91}
+.pi-low-stock{padding:7px 9px;border:1px solid #8d3933;background:#462320;color:#f5a09b;font-size:11px;border-radius:6px;white-space:nowrap}
+.pi-good-stock{padding:7px 9px;border:1px solid #3b8b49;background:#1e3b25;color:#85e79a;font-size:11px;border-radius:6px;white-space:nowrap}
+.pi-inventory-detail-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}
+.pi-inventory-detail-metrics>div{background:#25221d;border:1px solid #5c4830;border-radius:9px;padding:12px}
+.pi-inventory-detail-metrics small{color:#aaa095;font-size:11px;display:block}.pi-inventory-detail-metrics strong{color:#eec063;font-size:21px;margin-top:6px;display:block}
+.pi-inventory-movements{border-top:1px solid #4a3c2d;padding-top:12px;max-height:330px;overflow:auto}
+.pi-inventory-movements h4{font-size:14px!important;margin-bottom:11px}
+.pi-inventory-movements>div{display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid #35302a}
+.pi-inventory-movements>div>span{font-size:11px;border-radius:5px;padding:5px;color:#f4a097;background:#482520}
+.pi-inventory-movements>div>span.plus{color:#74d69a;background:#1b442e}.pi-inventory-movements strong{font-size:11px;display:block;overflow:hidden;text-overflow:ellipsis}.pi-inventory-movements small{font-size:10px;color:#9f9484;display:block}.pi-inventory-movements b{color:#eee;font-size:12px}.pi-inventory-movements>p{color:#b8aa9b;font-size:12px;margin:12px 0}
+.pi-inventory-adjust{border-top:1px solid #574127;padding-top:15px;margin-top:15px;display:grid;gap:9px}
+.pi-inventory-adjust h4{font-size:14px!important}.pi-inventory-adjust label{font-size:11px;color:#bdb2a2;display:block}
+.pi-inventory-adjust input{display:block;margin-top:5px;width:100%;min-height:38px}
+.pi-inventory-adjust button{background:linear-gradient(135deg,#ba8122,#ffca57);color:#211709;font-weight:850;border:0;border-radius:8px;padding:11px}
+.pi-inventory-adjust button:disabled{opacity:.4}.pi-inventory-limited{padding:10px;border:1px dashed #594b36;border-radius:7px;color:#cfb58e;font-size:11px}
+.pi-inventory-notice{background:#1f4829;color:#9aeca7;font-size:12px;padding:9px;border-radius:8px}
+@media(max-width:1170px){.pi-inventory-layout{grid-template-columns:1fr}.pi-inventory-detail{max-width:none}}
+@media(max-width:760px){.pi-inventory-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pi-inventory-tools{flex-wrap:wrap}.pi-inventory-tools>label{max-width:none;flex:1 1 220px}}
+@media(max-width:430px){.pi-inventory-metrics{gap:8px}.pi-inventory-metrics>div{padding:10px;gap:8px}.pi-inventory-metrics>div>span{height:31px;width:31px;font-size:17px}.pi-inventory-metrics strong{font-size:19px}.pi-inventory-filter button{padding:8px 7px;font-size:10px}.pi-inventory-tools>label{flex-basis:100%}}

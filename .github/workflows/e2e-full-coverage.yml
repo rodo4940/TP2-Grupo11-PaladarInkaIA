@@ -1,0 +1,137 @@
+name: Extended Full-System UI Evidence
+on:
+  push:
+    branches: [release/paladar-inka-v1-piloto, feature/paladar-inka-v5-sistema-integral-caja-ia]
+    paths:
+      - "scripts/e2e_catalogo_permisos.py"
+      - "scripts/e2e_browser.py"
+      - "scripts/e2e_professional_redesign.py"
+      - "scripts/e2e_premium_visual.py"
+      - "scripts/e2e_responsive_matrix.py"
+      - "scripts/e2e_studio_v4.py"
+      - "scripts/e2e_inka_v5.py"
+      - "scripts/e2e_caja_v6.py"
+      - "scripts/build_evidence_gallery.py"
+      - "scripts/qa_security_smoke.py"
+      - "frontend/src/**"
+      - "frontend/index.html"
+      - "backend/app/**"
+      - ".github/workflows/e2e-full-coverage.yml"
+  pull_request:
+    branches: [release/paladar-inka-v1-piloto]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-browser-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: paladar_qa_extended
+          POSTGRES_USER: qa_user
+          POSTGRES_PASSWORD: temporary_ci_only_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qa_user -d paladar_qa_extended"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: paladar_qa_extended
+      DATABASE_USER: qa_user
+      DATABASE_PASSWORD: temporary_ci_only_password
+      CORS_ORIGINS: http://127.0.0.1:5173
+      VITE_API_URL: http://127.0.0.1:8000
+      E2E_FRONTEND_URL: http://127.0.0.1:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Generate temporary secrets for isolated tests
+        run: |
+          python - <<'PY'
+          import secrets, os
+          with open(os.environ['GITHUB_ENV'],'a') as env:
+              env.write('JWT_SECRET='+secrets.token_hex(32)+'\n')
+              env.write('SEED_ADMIN_PASSWORD='+secrets.token_urlsafe(24)+'\n')
+          PY
+      - name: Install code dependencies
+        run: |
+          pip install "./backend[test]" playwright
+          npm ci --prefix frontend
+      - name: Upgrade PostgreSQL schema and insert fictional records
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.seed
+      - name: Start backend and frontend on loopback
+        run: |
+          (cd backend && nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > ../backend-full-e2e.log 2>&1 &)
+          (cd frontend && nohup npm run dev -- --host 127.0.0.1 > ../frontend-full-e2e.log 2>&1 &)
+          python - <<'PY'
+          import time, urllib.request
+          for url in ('http://127.0.0.1:8000/api/v1/health','http://127.0.0.1:5173'):
+              for attempt in range(45):
+                  try:
+                      with urllib.request.urlopen(url,timeout=3) as response:
+                          if response.status==200:break
+                  except Exception:pass
+                  time.sleep(1)
+              else: raise RuntimeError('No responde '+url)
+          PY
+      - name: Run Chromium and verify extended UI screenshots
+        run: python scripts/e2e_browser.py
+      - name: Capture 52 responsive UX screenshots across four breakpoints
+        run: python scripts/e2e_responsive_matrix.py
+      - name: Capture Studio v4 across four new viewports (48 genuine PNG)
+        run: python scripts/e2e_studio_v4.py
+      - name: Capture 40 additional Inka v5 login, billing, IA and responsive evidence
+        run: python scripts/e2e_inka_v5.py
+      - name: Validate daily caja and capture 12 genuine responsive screenshots
+        run: python scripts/e2e_caja_v6.py
+      - name: Verify HTTP security controls on running backend
+        run: python scripts/qa_security_smoke.py
+      - name: Verify screenshot manifest
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          folder=pathlib.Path('e2e/evidencias')
+          obj=json.loads((folder/'e2e-results.json').read_text())
+          pics=list(folder.glob('*.png'))
+          assert len(pics)==252,(len(pics),[p.name for p in pics])
+          assert len(obj['screenshots'])==252
+          assert len({x['file'] for x in obj['screenshots']})==252
+          inkav5=json.loads((folder/'inka-v5-results.json').read_text())
+          assert inkav5['new_screenshots']==40 and inkav5['total_screenshots']==240
+          assert not inkav5['javascript_errors']
+          assert all(not x['horizontal_overflow'] for x in inkav5['scenarios'])
+          caja=json.loads((folder/'caja-v6-results.json').read_text())
+          assert caja['new_screenshots']==12 and caja['total_screenshots']==252
+          assert not caja['browser_errors']
+          assert all(x['png_width'] in (320,390,768,1440) and not x['overflow'] for x in caja['metrics'])
+          studio=json.loads((folder/'studio-v4-results.json').read_text())
+          assert studio['new_screenshots']==48 and studio['total_screenshots']==200
+          assert not studio['horizontal_overflows'] and not studio['runtime_errors']
+          report=json.loads((folder/'security-smoke-results.json').read_text())
+          assert report['count']==27 and report['failed']==0,report
+          print('Validated screenshots:',len(pics),'Security controls:',report['count'])
+          PY
+      - name: Build HTML gallery, SHA256 manifest and auditable report
+        run: python scripts/build_evidence_gallery.py
+      - name: Upload original evidence and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paladar-inka-v6-252-real-screens
+          path: |
+            e2e/evidencias/**
+            backend-full-e2e.log
+            frontend-full-e2e.log
