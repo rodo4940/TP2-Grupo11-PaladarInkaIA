@@ -63,10 +63,10 @@ def capture_state(playwright, state):
         page.locator('input[autocomplete="username"]').fill('admin')
         page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
         page.get_by_role('button',name='Ingresar al sistema').click()
-        expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
         if w<=880:
             page.get_by_role('button',name='Abrir menú').click()
-        page.locator('nav').get_by_role('button',name='Caja y comprobantes',exact=True).click()
+        page.locator('nav').get_by_role('button',name='Finanzas / Caja',exact=True).click()
         expect(page.get_by_role('heading',name='Caja y comprobantes',exact=True).first).to_be_visible()
         if state in ('refund_pending','refund_confirmed'):
             heading=page.get_by_role('heading',name='Devoluciones de pagos')

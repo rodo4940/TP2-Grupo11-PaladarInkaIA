@@ -143,14 +143,14 @@ with sync_playwright() as playwright:
         page.locator('input[autocomplete="username"]').fill('admin')
         page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
         page.get_by_role('button',name='Ingresar al sistema').click()
-        expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
         expect(page.locator('.environment')).to_contain_text('Datos sincronizados')
         expect(page.locator('.sidebar-head .inka-brand-icon')).to_have_count(1)
-        snap(page,slug+'_dashboard_inka','Panel general con métricas reales e identidad gastronómica')
+        snap(page,slug+'_dashboard_inka','Dashboard con métricas reales e identidad gastronómica')
 
-        navigate(page,'Ventas / POS','Nuevo pedido')
+        navigate(page,'Ventas (POS)','Ventas / Caja POS')
         page.wait_for_function("""() => {
-           const imgs=[...document.querySelectorAll('.product-card img')];
+           const imgs=[...document.querySelectorAll('.pi-pos-card img')];
            return imgs.length>=4 && imgs.every(img=>img.complete && img.naturalWidth>0);
         }""",timeout=35000)
         snap(page,slug+'_catalogo_pos','Tarjetas fotográficas de venta, categorías, carrito y totales de servidor')
@@ -168,7 +168,7 @@ with sync_playwright() as playwright:
         assert 'No constituye comprobante tributario SUNAT' in page.locator('.billing-ticket').inner_text()
         snap(page,slug+'_ticket_interno','Vista previa imprimible de constancia interna; sin afirmar emisión SUNAT')
 
-        navigate(page,'Analítica inteligente','Inteligencia operativa')
+        navigate(page,'IA y recomendaciones','Inteligencia operativa')
         expect(page.get_by_role('heading',name='Consulta tu operación')).to_be_visible()
         expect(page.get_by_text('Datos disponibles')).to_be_visible()
         snap(page,slug+'_ia_contexto','Asistente operativo con indicadores agregados y metodología visible')
@@ -184,10 +184,10 @@ with sync_playwright() as playwright:
     page.locator('input[autocomplete="username"]').fill('cocina')
     page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
     page.get_by_role('button',name='Ingresar al sistema').click()
-    expect(page.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
     page.get_by_role('button',name='Abrir menú').click()
-    expect(page.locator('nav').get_by_role('button',name='Caja y comprobantes')).to_have_count(0)
-    expect(page.locator('nav').get_by_role('button',name='Analítica inteligente')).to_have_count(0)
+    expect(page.locator('nav').get_by_role('button',name='Finanzas / Caja')).to_have_count(0)
+    expect(page.locator('nav').get_by_role('button',name='IA y recomendaciones')).to_have_count(0)
     expect(page.get_by_role('button',name='Ir a Vender')).to_have_count(0)
     context.close()
     browser.close()

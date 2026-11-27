@@ -36,6 +36,16 @@ export function ReferencePOS({products,customers,token,initialOrder,onRefresh,on
  const receivedCents=Math.round(Number(received)*100);
  const change=(id:number,n:number)=>setCart(old=>({...old,[id]:Math.max(0,Math.min(100,(old[id]||0)+n))}));
  const readyToPay=method!=='cash'||(Number.isFinite(receivedCents)&&receivedCents>=total);
+ async function createOnly(){
+  if(busy||!count||pendingOrder)return;
+  setBusy(true);setError('');
+  try{
+   const order=await post<Order>('/orders',{items:items.map(x=>({product_id:x.product.id,quantity:x.quantity})),customer_id:customer?Number(customer):null,table_label:(orderType==='Salón'?table:`${orderType}: ${table}`).slice(0,32),notes:note},token);
+   setPendingOrder(order);setCart({});setNote('');
+   void onRefresh();
+  }catch(e){setError(e instanceof Error?e.message:'No fue posible registrar el pedido.')}
+  finally{setBusy(false)}
+ }
  async function checkout(){
   if(busy||(!pendingOrder&&!count)||!readyToPay)return;
   setBusy(true);setError('');
@@ -68,6 +78,7 @@ export function ReferencePOS({products,customers,token,initialOrder,onRefresh,on
     {method==='cash'&&<div className="pi-pos-cash"><label>Monto recibido (S/)<input type="number" min="0" inputMode="decimal" step=".01" value={received} onChange={e=>setReceived(e.target.value)} placeholder={`Mínimo: ${(total/100).toFixed(2)}`}/></label><div><span>Vuelto</span><strong>{PEN(Math.max(0,receivedCents-total))}</strong></div></div>}
     <p className="pi-pos-disclaimer">Cobro registrado en el sistema; Yape, Plin y tarjeta requieren verificar por separado la transacción externa. Los tickets son internos, sin validez SUNAT.</p>
     {error&&<div className="pi-pos-error" role="alert">{error}</div>}
+    {!pendingOrder&&<button className="pi-pos-create-only" disabled={busy||!count} onClick={()=>void createOnly()}>♨ Enviar pedido a cocina sin cobrar</button>}
     <button className="pi-pos-charge" disabled={busy||(!pendingOrder&&!count)||!readyToPay} onClick={()=>void checkout()}>{busy?'Procesando…':pendingOrder?'▣ Confirmar cobro del pedido':'▣ Cobrar pedido'}</button>
    </aside>
   </div>

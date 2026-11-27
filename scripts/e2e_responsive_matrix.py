@@ -18,16 +18,16 @@ PASSWORD=os.environ['SEED_ADMIN_PASSWORD']
 data=json.loads(MANIFEST.read_text(encoding='utf-8'))
 assert len(data['screenshots'])==100, 'La matriz debe partir de 100 capturas de QA previas'
 screens=[
- ('dashboard','Panel general','Resumen operativo'),
- ('pos','Ventas / POS','Nuevo pedido'),
+ ('dashboard','Dashboard','¡Bienvenido a Paladar Inka AI!'),
+ ('pos','Ventas (POS)','Ventas / Caja POS'),
  ('orders','Pedidos','Gestión de pedidos'),
- ('kitchen','Cocina','Comandas de cocina'),
- ('inventory','Inventario / Kardex','Inventario y Kardex'),
- ('products','Productos y recetas','Productos y recetas'),
+ ('kitchen','Cocina','Cocina – KDS'),
+ ('inventory','Inventario','Inventario y Kardex'),
+ ('products','Productos','Productos y recetas'),
  ('customers','Clientes','Clientes'),
- ('reports','Reportes de ventas','Reportes y análisis'),
- ('ai','Analítica inteligente','Inteligencia operativa'),
- ('users','Usuarios y roles','Usuarios y permisos'),
+ ('reports','Reportes','Reportes y análisis'),
+ ('ai','IA y recomendaciones','Inteligencia operativa'),
+ ('users','Usuarios','Usuarios y permisos'),
  ('settings','Configuración','Configuración del entorno'),
 ]
 viewports=[
@@ -101,25 +101,25 @@ with sync_playwright() as p:
         page.locator('input[autocomplete="username"]').fill('admin')
         page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
         page.get_by_role('button',name='Ingresar al sistema').click()
-        expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
         expect(page.locator('.environment')).to_contain_text('Datos sincronizados')
         for key,nav,heading in screens:
             if key!='dashboard':select_section(page,nav,heading)
             if key=='dashboard':
-                expect(page.get_by_role('heading',name='Tu operación de un vistazo')).to_be_visible()
+                expect(page.get_by_role('heading',name='Pedidos cobrados en los últimos 7 días')).to_be_visible()
             if key=='pos':
-                expect(page.locator('.product-card').first).to_be_visible()
+                expect(page.locator('.pi-pos-card').first).to_be_visible()
                 page.wait_for_function("""() => {
-                   const imgs=[...document.querySelectorAll('.product-card img')];
+                   const imgs=[...document.querySelectorAll('.pi-pos-card img')];
                    return imgs.length>=4 && imgs.every(img=>img.complete && img.naturalWidth>0);
                 }""",timeout=35000)
-                page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img=>img.decode()))")
+                page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img=>img.decode()))")
                 if width<=1250:
                     expect(page.get_by_role('button',name='Ver carrito (0)')).to_be_visible()
             if key=='products':
-                expect(page.get_by_role('heading',name='Productos y recetas',exact=True).first).to_be_visible()
+                expect(page.get_by_role('heading',name='Productos',exact=True).first).to_be_visible()
             if key=='kitchen':
-                expect(page.locator('.kitchen-columns')).to_be_visible()
+                expect(page.locator('.pi-kds-board')).to_be_visible()
             metric=verify_viewport(page,f'{label}_{key}')
             print('RESPONSIVE CHECK',label,key,metric,flush=True)
             capture(page,f'{label}_{key}_v3',
@@ -134,9 +134,9 @@ with sync_playwright() as p:
         expect(page.get_by_role('dialog',name='Centro de ayuda')).to_have_count(0)
         if width==1440:
             page.keyboard.press('Alt+2')
-            expect(page.get_by_role('heading',name='Nuevo pedido',exact=True)).to_be_visible()
+            expect(page.get_by_role('heading',name='Ventas / Caja POS',exact=True)).to_be_visible()
             page.keyboard.press('Alt+1')
-            expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+            expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
         context.close()
     browser.close()
 

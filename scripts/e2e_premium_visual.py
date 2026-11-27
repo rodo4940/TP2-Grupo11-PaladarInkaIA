@@ -30,7 +30,7 @@ def signin(page):
     page.locator('input[autocomplete="username"]').fill('admin')
     page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
     page.get_by_role('button',name='Ingresar al sistema').click()
-    expect(page.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
 
 def nav(page,title,heading):
     menu=page.get_by_role('button',name='Abrir menú')
@@ -60,35 +60,35 @@ with sync_playwright() as p:
     signin(page)
     wait_photo(page,'.banner-photo img')
     capture(page,92,'premium_dashboard_1536','Dashboard premium: indicadores reales y fotografía cargada')
-    nav(page,'Ventas / POS','Nuevo pedido')
-    assert page.locator('.product-card').count()>=4,'Faltan pizzas del catálogo semilla'
+    nav(page,'Ventas (POS)','Ventas / Caja POS')
+    assert page.locator('.pi-pos-card').count()>=4,'Faltan pizzas del catálogo semilla'
     page.wait_for_function("""() => {
-        const cards=[...document.querySelectorAll('.product-card')];
-        const imgs=[...document.querySelectorAll('.product-card img')];
+        const cards=[...document.querySelectorAll('.pi-pos-card')];
+        const imgs=[...document.querySelectorAll('.pi-pos-card img')];
         return cards.length>=4 && imgs.length===cards.length && imgs.every(el=>el.complete && el.naturalWidth>0);
     }""",timeout=25000)
     # El archivo cargado puede no estar pintado al tomar fullPage screenshots.
-    page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
+    page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
     capture(page,93,'premium_catalogo_fotos_reales','Tarjetas con imágenes decodificadas (fotografías de referencia o ilustración local) verificadas y precios de API')
-    page.locator('.product-card').first.click()
+    page.locator('.pi-pos-card').first.click()
     capture(page,94,'premium_carrito_una_pizza','Carrito con suma al seleccionar una ficha visual')
-    page.locator('.product-card').nth(1).click()
+    page.locator('.pi-pos-card').nth(1).click()
     capture(page,95,'premium_carrito_dos_pizzas','Carrito multirenglón y total calculado en frontend desde catálogo real')
     nav(page,'Productos y recetas','Productos y recetas')
     wait_photo(page,'.catalog-product-cell img')
     capture(page,96,'premium_catalogo_administracion','Mantenimiento de productos: miniaturas de referencia vinculadas por SKU')
-    nav(page,'Cocina','Comandas de cocina')
+    nav(page,'Cocina','Cocina – KDS')
     capture(page,97,'premium_kanban_cocina','Vista de cocina premium con datos persistidos de pedidos de prueba')
     tablet=browser.new_context(viewport={'width':1024,'height':768},locale='es-PE')
     tp=tablet.new_page();tp.set_default_timeout(25000)
-    signin(tp);nav(tp,'Ventas / POS','Nuevo pedido')
+    signin(tp);nav(tp,'Ventas (POS)','Ventas / Caja POS')
     capture(tp,98,'premium_tablet_pos_1024','Adaptación de punto de venta a tableta de 1024 píxeles')
     mobile=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True,device_scale_factor=1,locale='es-PE')
     mp=mobile.new_page();mp.set_default_timeout(25000)
     signin(mp)
     capture(mp,99,'premium_dashboard_movil_390','Dashboard operativo real en móvil de 390 píxeles')
-    nav(mp,'Ventas / POS','Nuevo pedido')
-    wait_photo(mp,'.product-card img')
+    nav(mp,'Ventas (POS)','Ventas / Caja POS')
+    wait_photo(mp,'.pi-pos-card img')
     capture(mp,100,'premium_pos_movil_fotografias','POS móvil real con tarjetas fotográficas y carrito responsive')
     browser.close()
 

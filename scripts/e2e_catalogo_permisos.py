@@ -21,7 +21,7 @@ def enter(page,login='admin'):
     page.locator('input[autocomplete="username"]').fill(login)
     page.locator('input[autocomplete="current-password"]').fill(password)
     page.get_by_role('button',name='Ingresar al sistema').click()
-    expect(page.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
 
 def tab(page,title,heading):
     mobile_menu=page.get_by_role('button',name='Abrir menú')
@@ -36,7 +36,7 @@ with sync_playwright() as p:
     page.set_default_timeout(15000)
     enter(page)
 
-    tab(page,'Inventario / Kardex','Inventario y Kardex')
+    tab(page,'Inventario','Inventario y Kardex')
     form=page.locator('form').filter(has=page.get_by_role('button',name='Guardar movimiento')).first
     form.get_by_label('Insumo').select_option(label='Harina')
     form.get_by_label('Variación (+ entrada, − salida)').fill('-9999999')
@@ -45,7 +45,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('alert')).to_contain_text('stock negativo')
     photo(page,'39_error_bloqueo_stock_negativo.png','Control de inventario rechaza saldo negativo')
 
-    tab(page,'Productos y recetas','Productos y recetas')
+    tab(page,'Productos','Productos y recetas')
     ingredient_form=page.locator('form').filter(has=page.get_by_role('button',name='Registrar insumo')).first
     ingredient_form.get_by_label('SKU').fill('QA-ING-39')
     ingredient_form.get_by_label('Nombre').fill('Rocoto de laboratorio QA')
@@ -80,7 +80,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('alert')).to_contain_text('Receta completa actualizada')
     photo(page,'45_receta_guardada_correctamente.png','Guardado de receta validado por el sistema')
 
-    tab(page,'Ventas / POS','Nuevo pedido')
+    tab(page,'Ventas (POS)','Ventas / Caja POS')
     expect(page.get_by_role('button',name=re.compile('Pizza integral de pruebas QA'))).to_be_visible()
     page.get_by_role('button',name=re.compile('Pizza integral de pruebas QA')).click()
     photo(page,'46_producto_nuevo_disponible_en_pos.png','Producto con receta incorporado al POS')
@@ -93,10 +93,10 @@ with sync_playwright() as p:
     row.get_by_role('button',name='Cancelar').click()
     expect(page.get_by_role('alert')).to_contain_text('Cancelado')
     photo(page,'48_cancelacion_pedido_no_pagado.png','Cancelación del pedido no cobrado')
-    tab(page,'Inventario / Kardex','Inventario y Kardex')
+    tab(page,'Inventario','Inventario y Kardex')
     photo(page,'49_kardex_reintegro_por_cancelacion.png','Kardex tras cancelación y reintegro de insumos')
 
-    tab(page,'Usuarios y roles','Usuarios y permisos')
+    tab(page,'Usuarios','Usuarios y permisos')
     form=page.locator('form').filter(has=page.get_by_role('button',name='Crear cuenta')).first
     form.get_by_label('Usuario único').fill('qa_colaborador39')
     form.get_by_label('Nombre completo').fill('Colaborador control de accesos')
@@ -117,16 +117,16 @@ with sync_playwright() as p:
 
     cashier=browser.new_page(viewport={'width':1440,'height':900},locale='es-PE')
     enter(cashier,'cajero')
-    assert cashier.locator('nav').get_by_role('button',name='Usuarios y roles').count()==0
+    assert cashier.locator('nav').get_by_role('button',name='Usuarios').count()==0
     photo(cashier,'54_cajero_acceso_controlado.png','Rol caja no ve módulo administración')
-    tab(cashier,'Inventario / Kardex','Inventario y Kardex')
+    tab(cashier,'Inventario','Inventario y Kardex')
     expect(cashier.get_by_text('Solo administración puede modificar las existencias.')).to_be_visible()
     photo(cashier,'55_cajero_no_puede_reponer.png','Rol caja consulta inventario sin modificar existencias')
 
     mobile=browser.new_context(viewport={'width':390,'height':844},device_scale_factor=1,locale='es-PE',is_mobile=True,has_touch=True)
     mp=mobile.new_page();enter(mp,'cajero')
     photo(mp,'56_dashboard_movil_autenticado.png','Dashboard real de cajero en móvil 390×844')
-    tab(mp,'Ventas / POS','Nuevo pedido')
+    tab(mp,'Ventas (POS)','Ventas / Caja POS')
     photo(mp,'57_pos_movil_autenticado.png','POS responsive en móvil de cajero')
 
     tablet=browser.new_page(viewport={'width':820,'height':1180},locale='es-PE')

@@ -11,18 +11,18 @@ PASSWORD=os.environ["SEED_ADMIN_PASSWORD"]
 OUT=Path("e2e/adaptive-v7");OUT.mkdir(parents=True,exist_ok=True)
 SIZES=[(320,720),(360,780),(390,844),(430,932),(768,1024),(1024,768),(1440,900)]
 VIEWS=[
- ("dashboard","Panel general","Resumen operativo"),
- ("pos","Ventas / POS","Nuevo pedido"),
+ ("dashboard","Dashboard","¡Bienvenido a Paladar Inka AI!"),
+ ("pos","Ventas (POS)","Ventas / Caja POS"),
  ("orders","Pedidos","Gestión de pedidos"),
- ("kitchen","Cocina","Comandas de cocina"),
- ("inventory","Inventario / Kardex","Inventario y Kardex"),
- ("products","Productos y recetas","Productos y recetas"),
+ ("kitchen","Cocina","Cocina – KDS"),
+ ("inventory","Inventario","Inventario y Kardex"),
+ ("products","Productos","Productos y recetas"),
  ("customers","Clientes","Clientes"),
- ("reports","Reportes de ventas","Reportes y análisis"),
- ("ai","Analítica inteligente","Inteligencia operativa"),
- ("users","Usuarios y roles","Usuarios y permisos"),
+ ("reports","Reportes","Reportes y análisis"),
+ ("ai","IA y recomendaciones","Inteligencia operativa"),
+ ("users","Usuarios","Usuarios y permisos"),
  ("settings","Configuración","Configuración del entorno"),
- ("billing","Caja y comprobantes","Caja y comprobantes"),
+ ("billing","Finanzas / Caja","Caja y comprobantes"),
 ]
 captures=[]
 errors=[]
@@ -79,16 +79,22 @@ with sync_playwright() as p:
         page.locator('input[autocomplete="username"]').fill("admin")
         page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
         page.get_by_role("button",name="Ingresar al sistema").click()
-        expect(page.get_by_role("heading",name="Resumen operativo",exact=True)).to_be_visible()
+        expect(page.get_by_role("heading",name="¡Bienvenido a Paladar Inka AI!",exact=True)).to_be_visible()
         expect(page.locator(".environment")).to_contain_text("Datos sincronizados")
         save(page,f"{w}_dashboard")
         for key,label,heading in VIEWS[1:]:
             nav(page,label,heading,w<=880)
-            if w<=700 and key in ("orders","inventory","products","customers","users"):
+            if w<=700 and key in ("inventory","products","customers","users"):
                 loc=page.locator(f".{key}-mobile-cards tbody tr")
                 expect(loc.first).to_be_visible()
                 assert loc.first.evaluate("(el)=>getComputedStyle(el).display")=="block"
                 assert loc.first.locator("td[data-label]").count()>=4
+            if key=="orders":
+                expect(page.locator(".pi-orders-list")).to_be_visible()
+            if key=="kitchen":
+                expect(page.locator(".pi-kds-board")).to_be_visible()
+            if key=="pos":
+                expect(page.locator(".pi-pos-products")).to_be_visible()
             if key=="billing":
                 expect(page.get_by_role("heading",name="Resumen diario de caja")).to_be_visible()
                 expect(page.locator(".cash-method-grid article")).to_have_count(4)
