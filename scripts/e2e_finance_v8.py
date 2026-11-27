@@ -67,7 +67,7 @@ def capture_state(playwright, state):
         if w<=880:
             page.get_by_role('button',name='Abrir menú').click()
         page.locator('nav').get_by_role('button',name='Caja y comprobantes',exact=True).click()
-        expect(page.get_by_role('heading',name='Caja y comprobantes',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='Caja y comprobantes',exact=True).first).to_be_visible()
         if state in ('refund_pending','refund_confirmed'):
             heading=page.get_by_role('heading',name='Devoluciones de pagos')
             expect(heading).to_be_visible()
