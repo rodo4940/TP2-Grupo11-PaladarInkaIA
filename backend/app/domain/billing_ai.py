@@ -7,6 +7,7 @@ indicadores agregados; nunca modifica productos, stock, usuarios o cobros.
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+import json
 import logging
 
 import httpx
@@ -44,7 +45,7 @@ def billing_row(payment: Payment) -> dict:
         'document_type': 'TICKET_INTERNO_NO_TRIBUTARIO',
         'fiscal_status': 'NO_EMITIDO_SUNAT',
         'order_id': order.id,
-        'issued_at': payment.created_at.isoformat(),
+        'issued_at': as_lima(payment.created_at).isoformat(),
         'method': payment.method,
         'total_cents': payment.amount_cents,
         'customer_name': order.customer.name if order.customer else 'Consumidor final',
@@ -99,7 +100,7 @@ class AskIn(BaseModel):
 def insights_snapshot(db: Session) -> dict:
     today = datetime.now(LIMA).date()
     previous = today - timedelta(days=1)
-    paid = list(db.scalars(select(Payment).order_by(Payment.id.desc()).limit(1000)))
+    paid = list(db.scalars(select(Payment).order_by(Payment.id.desc())))
     active_orders = list(db.scalars(select(Order).where(Order.status.in_(['pending', 'preparing', 'ready']))))
     products = list(db.scalars(select(Product).where(Product.active.is_(True))))
     low_stock = list(db.scalars(select(Ingredient).where(Ingredient.stock <= Ingredient.minimum_stock)))
@@ -203,7 +204,7 @@ def model_answer(question: str, facts: dict) -> str | None:
                 'instructions': instructions,
                 'input': (
                     'INDICADORES AGREGADOS (JSON): ' +
-                    __import__('json').dumps(facts, ensure_ascii=False) +
+                    json.dumps(facts, ensure_ascii=False) +
                     '\nPREGUNTA DEL USUARIO: ' + question
                 ),
                 'max_output_tokens': 320,
