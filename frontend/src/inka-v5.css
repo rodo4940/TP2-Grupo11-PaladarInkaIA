@@ -266,3 +266,10 @@ body{background:#f5f4ee}
 .copilot-legal,
 .copilot-answer small,
 .copilot-products>div{color:#506653}
+
+/* POS y caja comparten la identidad para el ticket rápido y el reimpreso. */
+.receipt-inka-brand{display:flex;align-items:center;justify-content:center;gap:13px;padding:11px 0 17px;margin-bottom:10px;border-bottom:1px dashed #d2d9c9}
+.receipt-inka-brand h2{font-size:21px;line-height:1.12;letter-spacing:-.055em;color:#28503a;max-width:165px}
+.receipt-inka-brand small{display:block;margin-top:5px;font-size:10px;letter-spacing:.035em;color:#576b57}
+.receipt-sheet .ticket-warning{font-weight:780;letter-spacing:.01em;color:#8f473a}
+@media(max-width:420px){.receipt-inka-brand h2{font-size:18px}}
