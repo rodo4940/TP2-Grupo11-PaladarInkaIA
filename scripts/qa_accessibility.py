@@ -31,7 +31,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Ingresar al sistema').click()
     expect(page.get_by_role('heading',name='Resumen operativo')).to_be_visible()
     scan('Dashboard')
-    for tab,heading in [('Ventas / POS','Nuevo pedido'),('Pedidos','Gestión de pedidos'),('Cocina','Comandas de cocina'),('Inventario / Kardex','Inventario y Kardex'),('Productos y recetas','Productos y recetas'),('Clientes','Clientes'),('Reportes de ventas','Reportes y análisis'),('Usuarios y roles','Usuarios y permisos')]:
+    for tab,heading in [('Ventas / POS','Nuevo pedido'),('Pedidos','Gestión de pedidos'),('Cocina','Comandas de cocina'),('Inventario / Kardex','Inventario y Kardex'),('Productos y recetas','Productos y recetas'),('Clientes','Clientes'),('Reportes de ventas','Reportes y análisis'),('Caja y comprobantes','Caja y comprobantes'),('Analítica inteligente','Inteligencia operativa'),('Usuarios y roles','Usuarios y permisos')]:
         page.locator('nav').get_by_role('button',name=tab).click()
         expect(page.get_by_role('heading',name=heading,exact=True).first).to_be_visible()
         scan(tab)
