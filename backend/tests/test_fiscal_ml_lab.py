@@ -117,3 +117,29 @@ def test_trained_demo_is_fitted_with_chronological_holdout_and_identified_as_syn
     assert c.get('/api/v1/ai/trained-demo/forecast?days=15',headers=a['cashier']).status_code==422
     assert c.get('/api/v1/ai/trained-demo/forecast',headers=a['kitchen']).status_code==403
     assert train_on_authorized_daily_series(synthetic_history()['PIZ-CLASICA'],100)['promoted'] is False
+
+
+def test_fiscal_sandbox_is_disabled_in_real_production_mode(env,monkeypatch):
+    from types import SimpleNamespace
+    client,auth,_=env
+    monkeypatch.setattr('app.domain.fiscal_demo.get_settings',
+                        lambda: SimpleNamespace(app_env='production'))
+    denied=client.get('/api/v1/fiscal-demo/documents',headers=auth['admin'])
+    assert denied.status_code==403
+    assert 'deshabilitado' in denied.json()['detail']
+
+
+def test_fiscal_local_xml_rounding_is_consistent_with_two_items(env):
+    client,auth,_=env
+    # Dos unidades, mismas líneas: cálculo de total y subtotal recuperables.
+    order=post_order(client,auth['cashier'],quantity=2)
+    assert order.status_code==201
+    paid=client.post(f"/api/v1/orders/{order.json()['id']}/payment",headers=auth['cashier'],
+         json={'method':'cash','amount_cents':6400})
+    assert paid.status_code==201
+    doc=client.post('/api/v1/fiscal-demo/documents',headers=auth['cashier'],json={
+      'payment_id':paid.json()['id'],'document_type':'03',
+      'customer_document_type':'0','customer_document_number':'',
+      'customer_name':'Consumidor ficticio','idempotency_key':'LAB-MULTI-UNITS-006'})
+    assert doc.status_code==201,doc.text
+    assert doc.json()['total_cents']==doc.json()['net_cents']+doc.json()['tax_cents']
