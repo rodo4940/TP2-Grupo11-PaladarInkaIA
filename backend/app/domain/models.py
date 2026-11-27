@@ -107,6 +107,7 @@ class Payment(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     order: Mapped[Order] = relationship(back_populates='payment')
+    refund: Mapped['Refund | None'] = relationship(back_populates='payment', uselist=False, lazy='selectin')
     __table_args__ = (CheckConstraint("method IN ('cash','card','yape','plin')", name='ck_payment_method'), CheckConstraint('amount_cents >= 0', name='ck_payment_amount'))
 
 
@@ -142,3 +143,45 @@ class OrderConsumption(Base):
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     order: Mapped[Order] = relationship(back_populates='consumptions')
     __table_args__ = (UniqueConstraint('order_id','ingredient_id',name='uq_order_consumption'), CheckConstraint('amount > 0', name='ck_consumption_amount'))
+
+class Refund(Base):
+    """Solicitud/confirmación manual de devolución; jamás ejecuta transferencias."""
+    __tablename__ = 'refunds'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    payment_id: Mapped[int] = mapped_column(ForeignKey('payments.id', ondelete='RESTRICT'), nullable=False, unique=True)
+    requested_by: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'), nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default='pending', nullable=False)
+    confirmation_reference: Mapped[str | None] = mapped_column(String(120), nullable=True, unique=True)
+    confirmed_by: Mapped[int | None] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    payment: Mapped[Payment] = relationship(back_populates='refund', lazy='joined')
+    __table_args__ = (CheckConstraint("status IN ('pending','confirmed')", name='ck_refund_status'),)
+
+
+class CashCloseout(Base):
+    """Arqueo administrativo con doble control: no constituye cierre contable/tributario."""
+    __tablename__ = 'cash_closeouts'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    day: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
+    opening_cash_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    expected_cash_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    counted_cash_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    variance_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    gross_payments_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    confirmed_refunds_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    payments_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    refunds_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    submitted_by: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'), nullable=False)
+    approved_by: Mapped[int | None] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'), nullable=True)
+    state: Mapped[str] = mapped_column(String(20), default='submitted', nullable=False)
+    note: Mapped[str] = mapped_column(String(500), default='', nullable=False)
+    approval_note: Mapped[str] = mapped_column(String(500), default='', nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    __table_args__ = (
+        CheckConstraint("state IN ('submitted','approved')", name='ck_closeout_state'),
+        CheckConstraint('opening_cash_cents >= 0', name='ck_closeout_opening'),
+        CheckConstraint('counted_cash_cents >= 0', name='ck_closeout_counted'),
+    )
