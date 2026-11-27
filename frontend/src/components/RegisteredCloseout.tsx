@@ -5,7 +5,7 @@ import type {RegisteredCashCloseout,Role} from '../types/domain';
 const money=(v:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(v/100);
 const parseCash=(value:string)=>{
  const clean=value.trim().replace(',','.');
- if(!/^\\d{1,10}(\\.\\d{1,2})?$/.test(clean))return null;
+ if(!/^\d{1,10}(\.\d{1,2})?$/.test(clean))return null;
  const n=Math.round(Number(clean)*100);
  return Number.isSafeInteger(n)?n:null;
 };
