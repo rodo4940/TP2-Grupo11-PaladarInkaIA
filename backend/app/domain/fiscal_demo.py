@@ -12,6 +12,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from hashlib import sha256
 import re
 from xml.etree import ElementTree as ET
+from defusedxml.ElementTree import fromstring as safe_fromstring
+from defusedxml.common import DefusedXmlException
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, model_validator
@@ -280,5 +282,5 @@ def verify(document_id:int,db:Session=Depends(get_db),
 
 
 def _is_xml(content:str)->bool:
-    try:ET.fromstring(content);return True
-    except ET.ParseError:return False
+    try:safe_fromstring(content);return True
+    except (ET.ParseError, DefusedXmlException):return False
