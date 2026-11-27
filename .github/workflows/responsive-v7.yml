@@ -5,6 +5,7 @@ on:
     paths:
       - "frontend/src/**"
       - "scripts/e2e_adaptive_v7.py"
+      - "scripts/qa_responsive_seed.py"
       - "scripts/e2e_finance_v8.py"
       - ".github/workflows/responsive-v7.yml"
   pull_request:
@@ -82,8 +83,8 @@ jobs:
                   time.sleep(1)
               else:raise RuntimeError('No responde '+url)
           PY
-      - name: Populate test sales and customers through real browser flows
-        run: python scripts/e2e_browser.py
+      - name: Prepare isolated synthetic transactions over real API
+        run: python scripts/qa_responsive_seed.py
       - name: Verify 91 real responsive states and exact PNG dimensions
         run: python scripts/e2e_adaptive_v7.py
       - name: Ensure complete 91 screenshot manifest

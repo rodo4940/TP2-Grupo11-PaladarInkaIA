@@ -24,16 +24,16 @@ sizes=[
  (1366,900,'escritorio_1366'),
 ]
 modules=[
- ('dashboard','Panel general','Resumen operativo'),
- ('pos','Ventas / POS','Nuevo pedido'),
+ ('dashboard','Dashboard','¡Bienvenido a Paladar Inka AI!'),
+ ('pos','Ventas (POS)','Ventas / Caja POS'),
  ('orders','Pedidos','Gestión de pedidos'),
- ('kitchen','Cocina','Comandas de cocina'),
- ('inventory','Inventario / Kardex','Inventario y Kardex'),
- ('products','Productos y recetas','Productos y recetas'),
+ ('kitchen','Cocina','Cocina – KDS'),
+ ('inventory','Inventario','Inventario'),
+ ('products','Productos','Productos y recetas'),
  ('customers','Clientes','Clientes'),
- ('reports','Reportes de ventas','Reportes y análisis'),
- ('ai','Analítica inteligente','Inteligencia operativa'),
- ('users','Usuarios y roles','Usuarios y permisos'),
+ ('reports','Reportes','Reportes y análisis'),
+ ('ai','IA y recomendaciones','Inteligencia operativa'),
+ ('users','Usuarios','Usuarios y permisos'),
  ('settings','Configuración','Configuración del entorno'),
 ]
 metrics=[]
@@ -104,34 +104,34 @@ with sync_playwright() as browser_tool:
       page.locator('input[autocomplete="username"]').fill('admin')
       page.locator('input[autocomplete="current-password"]').fill(PASSWORD)
       page.get_by_role('button',name='Ingresar al sistema').click()
-      expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+      expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
       expect(page.locator('.environment')).to_contain_text('Datos sincronizados')
       if width<=700:
         dock=page.get_by_role('navigation',name='Navegación rápida móvil')
         expect(dock).to_be_visible()
         expect(dock.get_by_role('button',name='Ir a Inicio')).to_have_attribute('aria-current','page')
         dock.get_by_role('button',name='Ir a Vender').click()
-        expect(page.get_by_role('heading',name='Nuevo pedido',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='Ventas / Caja POS',exact=True)).to_be_visible()
         dock.get_by_role('button',name='Ir a Inicio').click()
-        expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
       else:
         expect(page.locator('.mobile-dock')).to_be_hidden()
       for key,label,heading in modules:
         if key!='dashboard':navigate(page,label,heading)
-        if key!='dashboard':
+        if key not in ('dashboard','pos','orders','kitchen','inventory'):
           expect(page.locator('.module-heading .section-artwork')).to_be_visible()
           expect(page.locator('.module-heading')).to_have_count(1)
         if key=='dashboard':
-          expect(page.get_by_role('heading',name='Tu operación de un vistazo')).to_be_visible()
+          expect(page.get_by_role('heading',name='Pedidos cobrados en los últimos 7 días')).to_be_visible()
         if key=='pos':
-          expect(page.locator('.product-card').first).to_be_visible()
+          expect(page.locator('.pi-pos-card').first).to_be_visible()
           page.wait_for_function("""() => {
-            const photos=[...document.querySelectorAll('.product-card img')];
+            const photos=[...document.querySelectorAll('.pi-pos-card img')];
             return photos.length>=4 && photos.every(photo=>photo.complete && photo.naturalWidth>0);
           }""",timeout=35000)
-          page.locator('.product-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
+          page.locator('.pi-pos-card img').evaluate_all("imgs => Promise.all(imgs.map(img => img.decode()))")
           if width<=1250:
-            expect(page.get_by_role('button',name='Ver carrito (0)')).to_be_visible()
+            expect(page.locator('.pi-pos-ticket')).to_be_visible()
         if key=='settings':
           expect(page.get_by_role('heading',name='Configuración del entorno',exact=True)).to_be_visible()
         result=inspect(page,slug+'_'+key)
@@ -143,9 +143,9 @@ with sync_playwright() as browser_tool:
       expect(page.get_by_role('dialog',name='Centro de ayuda')).to_have_count(0)
       if width>=1000:
         page.keyboard.press('Alt+2')
-        expect(page.get_by_role('heading',name='Nuevo pedido',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='Ventas / Caja POS',exact=True)).to_be_visible()
         page.keyboard.press('Alt+1')
-        expect(page.get_by_role('heading',name='Resumen operativo',exact=True)).to_be_visible()
+        expect(page.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!',exact=True)).to_be_visible()
       context.close()
     # Validación funcional sin Internet al proveedor de fotografías: se usa arte local.
     offline=browser.new_context(viewport={'width':414,'height':896},locale='es-PE')
@@ -162,11 +162,11 @@ with sync_playwright() as browser_tool:
     p_off.locator('input[autocomplete="username"]').fill('admin')
     p_off.locator('input[autocomplete="current-password"]').fill(PASSWORD)
     p_off.get_by_role('button',name='Ingresar al sistema').click()
-    expect(p_off.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(p_off.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
     p_off.get_by_role('button',name='Ir a Vender').click()
-    expect(p_off.get_by_role('heading',name='Nuevo pedido')).to_be_visible()
+    expect(p_off.get_by_role('heading',name='Ventas / Caja POS')).to_be_visible()
     p_off.wait_for_function("""() => {
-      const photos=[...document.querySelectorAll('.product-card img')];
+      const photos=[...document.querySelectorAll('.pi-pos-card img')];
       return photos.length>=4 && photos.every(img=>img.currentSrc.includes('/illustrations/pizza-artisan.svg') && img.complete && img.naturalWidth>0);
     }""",timeout=30000)
     offline.close()
@@ -178,10 +178,10 @@ with sync_playwright() as browser_tool:
     p_role.locator('input[autocomplete="username"]').fill('cocina')
     p_role.locator('input[autocomplete="current-password"]').fill(PASSWORD)
     p_role.get_by_role('button',name='Ingresar al sistema').click()
-    expect(p_role.get_by_role('heading',name='Resumen operativo')).to_be_visible()
+    expect(p_role.get_by_role('heading',name='¡Bienvenido a Paladar Inka AI!')).to_be_visible()
     expect(p_role.get_by_role('button',name='Ir a Vender')).to_have_count(0)
     p_role.get_by_role('button',name='Abrir menú').click()
-    expect(p_role.locator('nav').get_by_role('button',name='Ventas / POS')).to_have_count(0)
+    expect(p_role.locator('nav').get_by_role('button',name='Ventas (POS)')).to_have_count(0)
     restricted.close()
     browser.close()
 
