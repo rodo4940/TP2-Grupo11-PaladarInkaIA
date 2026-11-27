@@ -84,11 +84,13 @@ with sync_playwright() as p:
         save(page,f"{w}_dashboard")
         for key,label,heading in VIEWS[1:]:
             nav(page,label,heading,w<=880)
-            if w<=700 and key in ("inventory","products","customers","users"):
+            if w<=700 and key in ("products","customers","users"):
                 loc=page.locator(f".{key}-mobile-cards tbody tr")
                 expect(loc.first).to_be_visible()
                 assert loc.first.evaluate("(el)=>getComputedStyle(el).display")=="block"
                 assert loc.first.locator("td[data-label]").count()>=4
+            if key=="inventory":
+                expect(page.locator(".pi-inventory-list")).to_be_visible()
             if key=="orders":
                 expect(page.locator(".pi-orders-list")).to_be_visible()
             if key=="kitchen":
