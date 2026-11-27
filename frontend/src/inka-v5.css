@@ -310,7 +310,7 @@ body{background:#f5f4ee}
 .cash-physical-count{background:#fafbf6;border:1px solid #e3e7dc;border-radius:13px;padding:15px 17px;display:flex;flex-direction:column;gap:7px}
 .cash-physical-count label{font-size:11px;font-weight:760;color:#506b57}
 .cash-physical-count input{min-height:39px;border:1px solid #cedfcb;max-width:260px;background:#fffefa}
-.cash-variance{display:flex;gap:11px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:#6c826f;margin-top:3px}
+.cash-variance{display:flex;gap:11px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:#48664f;margin-top:3px}
 .cash-variance strong{font-size:14px;font-variant-numeric:tabular-nums}
 .cash-variance .cash-balanced{color:#2a7451}
 .cash-variance .cash-surplus{color:#a46c28}
