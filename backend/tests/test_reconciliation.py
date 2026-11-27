@@ -164,3 +164,14 @@ def test_persistent_login_lockout_and_admin_password_reset(env):
     assert client.post(url,json={'username':'cajero','password':'ResetNewSecure456'}).status_code==200
     # Restablecimiento revoca JWT anteriores emitidos a ese usuario.
     assert client.get('/api/v1/auth/me',headers=auth['cashier']).status_code==401
+
+
+def test_postgres_refund_lock_does_not_target_optional_payment_join():
+    """Evita error PostgreSQL: FOR UPDATE en lado anulable de LEFT JOIN."""
+    from sqlalchemy import select
+    from sqlalchemy.dialects import postgresql
+    from app.domain.models import Refund
+    sql=str(select(Refund).where(Refund.id==1).with_for_update(of=Refund)
+            .compile(dialect=postgresql.dialect()))
+    assert 'LEFT OUTER JOIN payments' in sql
+    assert 'FOR UPDATE OF refunds' in sql
