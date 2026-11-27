@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import type {RefObject} from 'react';
 import type {BillingDocument,BillingLedger} from '../types/domain';
 import {api} from '../services/api';
 import {InkaBrand} from './InkaBrand';
@@ -76,7 +77,7 @@ export function BillingCenter({token}:{token:string}){
  </div>;
 }
 
-function Ticket({document,ticketRef}:{document:BillingDocument;ticketRef:React.RefObject<HTMLDivElement|null>}){
+function Ticket({document,ticketRef}:{document:BillingDocument;ticketRef:RefObject<HTMLDivElement|null>}){
  return <div className="billing-ticket" ref={ticketRef} id="billing-ticket-print" role="region" aria-label={`Ticket interno ${document.document_number}`}>
   <div className="ticket-brand"><InkaBrand size={67}/><div><strong>EL PALADAR<br/>DEL INKA</strong><span>Gastronomía & tradición</span></div></div>
   <div className="ticket-type">CONSTANCIA INTERNA DE PAGO</div>
