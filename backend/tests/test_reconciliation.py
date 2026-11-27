@@ -6,7 +6,7 @@ la migración real se valida aparte en CI con PostgreSQL.
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from test_business import post_order
+from tests.test_business import post_order, env
 
 
 def _payment(client, auth, method='cash'):
