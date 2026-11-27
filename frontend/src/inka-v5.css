@@ -273,3 +273,8 @@ body{background:#f5f4ee}
 .receipt-inka-brand small{display:block;margin-top:5px;font-size:10px;letter-spacing:.035em;color:#576b57}
 .receipt-sheet .ticket-warning{font-weight:780;letter-spacing:.01em;color:#8f473a}
 @media(max-width:420px){.receipt-inka-brand h2{font-size:18px}}
+
+/* Revisión visual humana: el texto de marca sobre fondo crema debe ser oscuro. */
+.login-shell .login-brand .brand-word{color:#224832!important;text-shadow:none!important}
+.login-shell .login-brand .brand-word b{color:#a05b36!important}
+.login-shell .login-brand .brand-word small{color:#486b56!important;opacity:1!important}
