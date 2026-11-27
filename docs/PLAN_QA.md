@@ -49,3 +49,11 @@ No usar DNI, teléfonos ni ventas reales de la pizzería sin autorización. Los 
 | RF-18 Analítica neta | Dashboard, reportes, asistente y heurística | Pagos originales y devoluciones separados; no incluir devoluciones confirmadas en unidades vendidas |
 
 Suite: `backend/tests/test_reconciliation.py`. Ejecutar en el commit final del PR y verificar resultados reales del workflow. Todos los resultados empresariales de `docs/UAT_PILOTO_V8.md` permanecen SIN EJECUTAR hasta que el negocio participe.
+
+## v9: pruebas funcionales, entrenamiento y evidencia
+- `tests/test_fiscal_ml_lab.py`: boleta, factura demo, integridad XML, idempotencia, nota vinculada a devolución manual, modelo Ridge sintético y métricas de holdout.
+- `tests/test_uat_lab_v9.py`: 16 escenarios independientes y prueba de cierre final y hash; los casos son **LABORATORIO** y no son entrevistas ni visitas a pizzería.
+- `.github/workflows/lab-v9.yml`: exporta XML de pytest, dataset ficticio agregado, métricas de modelo y SHA-256.
+- El flujo responsive y pruebas integrales existentes verifican los cambios en navegador Chromium; consultar resultado de HEAD antes de reportarlo como aprobado.
+- Copia remota y restauración de prueba: procedimiento documentado, **sin evidencia empresarial ejecutada**.
+- Acta comercial: sólo puede completarse con representante auténtico. No inventar firmas.
