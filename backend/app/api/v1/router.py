@@ -9,3 +9,6 @@ api_router.include_router(billing_ai_router)
 
 from app.domain.reconciliation import router as reconciliation_router
 api_router.include_router(reconciliation_router)
+
+from app.domain.fiscal_demo import router as fiscal_demo_router
+api_router.include_router(fiscal_demo_router)

@@ -187,3 +187,32 @@ class CashCloseout(Base):
         CheckConstraint('opening_cash_cents >= 0', name='ck_closeout_opening'),
         CheckConstraint('counted_cash_cents >= 0', name='ck_closeout_counted'),
     )
+
+class FiscalDemoDocument(Base):
+    """CPE demostrativo separado del ticket y de facturación real; sin emisión externa."""
+    __tablename__='fiscal_demo_documents'
+    id: Mapped[int]=mapped_column(Integer,primary_key=True)
+    payment_id: Mapped[int]=mapped_column(ForeignKey('payments.id',ondelete='RESTRICT'),nullable=False)
+    document_type: Mapped[str]=mapped_column(String(2),nullable=False)
+    series: Mapped[str]=mapped_column(String(4),nullable=False)
+    correlative: Mapped[int]=mapped_column(Integer,nullable=False)
+    issue_date: Mapped[str]=mapped_column(String(10),nullable=False)
+    customer_name: Mapped[str]=mapped_column(String(160),nullable=False)
+    customer_document_type: Mapped[str]=mapped_column(String(1),nullable=False)
+    customer_document_number: Mapped[str]=mapped_column(String(11),nullable=False)
+    affectation_code: Mapped[str]=mapped_column(String(2),nullable=False)
+    total_cents: Mapped[int]=mapped_column(Integer,nullable=False)
+    net_cents: Mapped[int]=mapped_column(Integer,nullable=False)
+    tax_cents: Mapped[int]=mapped_column(Integer,nullable=False)
+    xml_demo: Mapped[str]=mapped_column(String(50000),nullable=False)
+    xml_sha256: Mapped[str]=mapped_column(String(64),nullable=False)
+    idempotency_key: Mapped[str]=mapped_column(String(96),unique=True,nullable=False)
+    reference_document_id: Mapped[int | None]=mapped_column(ForeignKey('fiscal_demo_documents.id',ondelete='RESTRICT'),nullable=True,unique=True)
+    reason: Mapped[str]=mapped_column(String(250),nullable=False,default='')
+    created_by: Mapped[int]=mapped_column(ForeignKey('users.id',ondelete='RESTRICT'),nullable=False)
+    created_at: Mapped[datetime]=mapped_column(DateTime(timezone=True),default=utcnow,nullable=False)
+    __table_args__=(
+        UniqueConstraint('series','correlative',name='uq_fiscal_demo_series_correlative'),
+        CheckConstraint("document_type IN ('01','03','07')",name='ck_fiscal_demo_type'),
+        CheckConstraint("total_cents >= 0 AND net_cents >= 0 AND tax_cents >= 0",name='ck_fiscal_demo_money'),
+    )
