@@ -76,7 +76,20 @@ def snap(page, name, description):
     }
     focus = next((selector for key,selector in targets.items() if key in name), None)
     if focus and page.locator(focus).count():
-      page.locator(focus).first.scroll_into_view_if_needed()
+      # Calcular scroll de la ventana explícitamente: Playwright
+      # scroll_into_view_if_needed puede centrar el ticket dentro de un
+      # contenedor anidado y dejar el viewport móvil en una zona vacía.
+      page.evaluate("""selector => {
+        const node=document.querySelector(selector);
+        if(!node)return;
+        const absoluteTop=node.getBoundingClientRect().top+window.scrollY;
+        window.scrollTo({top:Math.max(0,absoluteTop-112),behavior:'instant'});
+      }""",focus)
+      page.wait_for_timeout(110)
+      position=page.locator(focus).first.bounding_box()
+      assert position is not None and position['y'] < page.viewport_size['height']-95 and position['y']+position['height']>75, (
+        f'Encuadre sin contenido: {name}; elemento fuera del viewport: {position}'
+      )
     page.screenshot(path=str(FOCUSED / file_name), full_page=False, animations='disabled')
     # Ambos archivos son salidas directas de Playwright. El encuadre se documenta
     # separado; solo la toma de página completa forma parte del manifiesto 001–240.
