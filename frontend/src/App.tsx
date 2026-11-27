@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import type {FormEvent, ReactNode} from 'react';
 import {api, post, patch, put, ApiError} from './services/api';
 import {SupportCenter} from './components/SupportCenter';
@@ -12,7 +12,7 @@ import {ReferenceDashboard} from './components/ReferenceDashboard';
 import {ReferencePOS} from './components/ReferencePOS';
 import {ReferenceKitchen} from './components/ReferenceKitchen';
 import {ReferenceOrders} from './components/ReferenceOrders';
-import {HERO_PHOTO} from './assets/menuPhotos';
+import {HERO_PHOTO, productImage} from './assets/menuPhotos';
 import type {AuthResponse, User, Role, Product, Ingredient, Customer, Order, OrderStatus, StockMovement, Dashboard, Report, Recommendation, Forecast, Audit, SystemInfo, CustomerInsights, InternalReceipt} from './types/domain';
 
 type View = 'dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings'|'billing';
@@ -52,6 +52,7 @@ const icons:Record<View,ReactNode>={
 function NavGlyph({id}:{id:View}){return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icons[id]}</svg>}
 function Field({title,children}:{title:string;children:ReactNode}){return <label className="field"><span>{title}</span>{children}</label>}
 function Empty({text}:{text:string}){return <div className="empty empty-designed" role="status"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true" fill="none"><rect x="9" y="19" width="50" height="38" rx="12" fill="#f1e8d8"/><path d="M19 26h30v22H19z" fill="#faf5e9" stroke="#ceb38b" strokeWidth="2"/><path d="M27 34h14M27 41h9" stroke="#b18e65" strokeWidth="3" strokeLinecap="round"/><circle cx="49" cy="18" r="10" fill="#dfebdc"/><path d="m45 18 3 3 6-7" stroke="#4b8766" strokeWidth="2.5" strokeLinecap="round"/></svg><p>{text}</p></div>}
+function FoodPhoto({product,small=false}:{product:Product;small?:boolean}){const src=productImage(product);return <span className={`food-picture${small?' food-picture-small':''}`}><img loading="lazy" src={src??'/illustrations/pizza-artisan.svg'} alt={`Imagen ilustrativa de ${product.name}`} onError={e=>{e.currentTarget.src='/illustrations/pizza-artisan.svg'}}/>{!small&&<span className="food-top">IMAGEN REFERENCIAL</span>}</span>}
 function Tile({label,value,detail,icon}:{label:string;value:string|number;detail?:string;icon:string}){return <div className="tile"><span className="tile-icon">{icon}</span><span><small>{label}</small><strong>{value}</strong>{detail && <em>{detail}</em>}</span></div>}
 
 function App(){
