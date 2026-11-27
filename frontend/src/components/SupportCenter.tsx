@@ -1,7 +1,7 @@
 import {useEffect,useRef} from 'react';
 import type {Role} from '../types/domain';
 
-type HelpView='dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings';
+type HelpView='dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings'|'billing';
 const viewHelp:Record<HelpView,{title:string;steps:string[]}>={
  dashboard:{title:'Panel general',steps:['Consulta los indicadores que provienen del servidor.','Usa Actualizar para consultar información nueva.','Abre la sección correspondiente desde los accesos rápidos.']},
  pos:{title:'Punto de venta',steps:['Busca una pizza o filtra por categoría y añádela al carrito.','Indica modalidad, referencia y cliente opcional.','Confirma el pedido y registra el pago por el monto confirmado.']},
@@ -11,7 +11,8 @@ const viewHelp:Record<HelpView,{title:string;steps:string[]}>={
  products:{title:'Productos y recetas',steps:['Administra precios, disponibilidad y categorías.','Asigna cantidades de ingredientes antes de vender un producto.','Las fotografías son ilustrativas: no sustituyen la validación de recetas.']},
  customers:{title:'Clientes',steps:['Registra clientes y sus datos de contacto.','Consulta historial y gastos basados en pedidos pagados.','Los puntos mostrados son referenciales, no un programa de canjes.']},
  reports:{title:'Reportes',steps:['Consulta ingresos registrados por pago.','Compara los productos según unidades efectivamente cobradas.','Exporta a CSV cuando necesites respaldar el análisis.']},
- ai:{title:'Analítica operativa',steps:['Revisa el ranking de menú basado en reglas.','Consulta una estimación descriptiva de demanda.','La aplicación no utiliza todavía un modelo de aprendizaje automático entrenado.']},
+ ai:{title:'Analítica operativa',steps:['Revisa el ranking de menú y una estimación descriptiva de demanda.','Pregunta al asistente por ventas, inventario, productos y cocina; la API responde a partir de indicadores.','Si no hay clave de modelo externo se usan reglas explicables; no se ejecutan cambios automáticamente.']},
+ billing:{title:'Caja y comprobantes',steps:['Registra un pago en Ventas / POS.','Consulta y filtra constancias INT por cliente, pedido o medio de pago.','Imprime el ticket interno. No sustituye la boleta o factura electrónica SUNAT.']},
  users:{title:'Usuarios y roles',steps:['Crea usuarios con contraseñas robustas.','Asigna permisos de caja, cocina o administración.','Revisa la bitácora y desactiva las cuentas sin uso.']},
  settings:{title:'Configuración',steps:['Comprueba la versión y el entorno conectados.','Actualiza la contraseña si es necesario.','Cambiar la contraseña revoca sesiones previas.']},
 };
