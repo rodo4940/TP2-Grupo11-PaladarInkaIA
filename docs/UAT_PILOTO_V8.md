@@ -31,7 +31,7 @@
 | UAT-09 | Caja por fecha Perú | Venta junto a medianoche se contabiliza en día correcto | Sin ejecutar |
 | UAT-10 | Solicitud de devolución | Mantiene pago histórico y registra motivo/auditoría | Sin ejecutar |
 | UAT-11 | Devolución de doble control | Otro administrador documenta referencia del reintegro EXTERNO | Sin ejecutar |
-| UAT-12 | Arqueo y cierre interno | Fondo inicial, conteo, diferencia y firma digital administrativa de otro usuario | Sin ejecutar |
+| UAT-12 | Arqueo y cierre interno | Fondo inicial, conteo, diferencia y aprobación registrada por otra persona administradora | Sin ejecutar |
 | UAT-13 | Cambios posteriores al arqueo | Registro se marca desactualizado y bloquea aprobación pendiente | Sin ejecutar |
 | UAT-14 | Responsive accesible | 320/390/768/1440 sin corte; teclado y lector de pantalla básico | Sin ejecutar |
 | UAT-15 | Analítica/IA | Aclara heurística, fuentes y límites, no inventa movimientos | Sin ejecutar |

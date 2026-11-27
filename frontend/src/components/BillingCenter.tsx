@@ -49,7 +49,7 @@ export function BillingCenter({token,role,userId}:{token:string;role:Role;userId
    {error&&<div role="alert" className="notice error billing-error">{error}<button type="button" className="secondary" onClick={()=>void refresh()}>Reintentar</button></div>}
    <div className="billing-metrics">
      <article><span>Pagos confirmados</span><strong>{ledger?.count??'—'}</strong><small>Registros persistidos</small></article>
-     <article><span>Ingreso registrado</span><strong>{ledger?money(ledger.total_cents):'—'}</strong><small>Total acumulado de pagos</small></article>
+     <article><span>Ingreso neto registrado</span><strong>{ledger?money(ledger.net_registered_cents):'—'}</strong><small>Pagos brutos menos devoluciones confirmadas</small></article>
      <article><span>Importe filtrado</span><strong>{money(totalFiltered)}</strong><small>{filtered.length} documentos visibles</small></article>
    </div>
    <CashCloseout token={token} role={role} userId={userId}/>
