@@ -17,6 +17,8 @@ PASSWORD = os.environ['SEED_ADMIN_PASSWORD']
 manifest = json.loads((OUT / 'e2e-results.json').read_text(encoding='utf-8'))
 assert len(manifest['screenshots']) == 200, 'Deben ejecutarse primero las 200 evidencias v4'
 index = 200
+FOCUSED = OUT / 'encuadres_viewport'
+FOCUSED.mkdir(exist_ok=True)
 results = []
 exceptions = []
 viewports = [
@@ -53,6 +55,22 @@ def snap(page, name, description):
     index += 1
     file_name = f'{index:03d}_{name}.png'
     page.screenshot(path=str(OUT / file_name), full_page=True, animations='disabled')
+    # Segunda toma auténtica, sin editar ni deformar: encuadre fijo del dispositivo.
+    # En capturas extensas el dock inferior se ve a mitad de la página al combinar
+    # todo el scroll; este segundo formato muestra la barra fija en su posición real.
+    focus_key = name.split('_', 2)[-1]
+    targets = {
+      'caja_filtros': '.billing-filters',
+      'ticket_interno': '.billing-ticket',
+      'ia_contexto': '.copilot-intro',
+      'ia_respuesta': '.copilot-conversation',
+    }
+    focus = next((selector for key,selector in targets.items() if key in name), None)
+    if focus and page.locator(focus).count():
+      page.locator(focus).first.scroll_into_view_if_needed()
+    page.screenshot(path=str(FOCUSED / file_name), full_page=False, animations='disabled')
+    # Ambos archivos son salidas directas de Playwright. El encuadre se documenta
+    # separado; solo la toma de página completa forma parte del manifiesto 001–240.
     with (OUT / file_name).open('rb') as file:
         header = file.read(24)
     assert header[:8] == b'\x89PNG\r\n\x1a\n', 'Cabecera PNG inválida'
@@ -153,13 +171,14 @@ with sync_playwright() as playwright:
     browser.close()
 
 assert index==240 and len(manifest['screenshots'])==240
+assert len(list(FOCUSED.glob('*.png')))==40, 'Faltan encuadres fijos de dispositivo'
 assert len({x['file'] for x in manifest['screenshots']})==240
 assert not exceptions,f'Errores JS no controlados: {exceptions}'
 manifest['screenshot_count']=240
 (OUT/'e2e-results.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
 (OUT/'inka-v5-results.json').write_text(json.dumps({
  'project':'El Paladar del Inka','total_screenshots':240,
- 'new_screenshots':40,'new_viewports':viewports,
+ 'new_screenshots':40,'viewport_crops':40,'new_viewports':viewports,
  'scenarios':results,'javascript_errors':exceptions,
  'limits':'Capturas de laboratorio con datos ficticios. Ticket interno, no SUNAT. IA local con opción de modelo por clave.'
 },ensure_ascii=False,indent=2),encoding='utf-8')
