@@ -69,3 +69,14 @@ export interface RegisteredCashCloseout {
  approval_note:string;created_at:string;approved_at:string|null;stale:boolean;disclaimer:string;
  finalized_at:string|null;finalized_by:number|null;snapshot_sha256:string|null;
 }
+
+/** DEMO: no es CPE tributario ni CDR emitido por SUNAT. */
+export interface FiscalDemoDocument {
+ id:number;payment_id:number;document_type:'01'|'03'|'07';
+ document_label:string;number:string;issue_date:string;currency:'PEN';
+ total_cents:number;net_cents:number;tax_cents:number;affectation_code:string;
+ customer_document_type:string;customer_document_number:string;customer_name:string;
+ reference_document_id:number|null;status:'SIMULADO_VALIDADO_LOCALMENTE';
+ sha256:string;issuer_ruc:string;digital_signature:false;sunat_submitted:false;
+ official_cdr:false;warning:string;xml_demo?:string;
+}
