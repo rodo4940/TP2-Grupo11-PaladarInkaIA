@@ -32,6 +32,9 @@ services:
       TOKEN_TTL_MINUTES: ${TOKEN_TTL_MINUTES:-60}
       CORS_ORIGINS: https://${PALADAR_DOMAIN:?Set PALADAR_DOMAIN}
       API_V1_PREFIX: /api/v1
+      # Opcional: sin ambos valores, el asistente usa reglas locales.
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
     expose: ["8000"]
     depends_on:
       db: {condition: service_healthy}
@@ -39,10 +42,11 @@ services:
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health',timeout=4)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready',timeout=4)"]
       interval: 30s
       timeout: 6s
       retries: 3
+      start_period: 25s
   frontend:
     build: {context: ./frontend, dockerfile: Dockerfile.prod}
     restart: unless-stopped

@@ -40,3 +40,12 @@ export interface AssistantAnswer {
  answer:string;mode:'modelo_externo_configurado'|'reglas_explicables_locales';
  basis:string[];snapshot_date:string;sample_paid_orders:number;warning:string;
 }
+
+export interface DailyCashSummary {
+ date:string;timezone:'America/Lima';currency:'PEN';
+ payments_count:number;gross_payments_cents:number;
+ by_method:Record<'cash'|'card'|'yape'|'plin',{count:number;amount_cents:number}>;
+ entries:BillingDocument[];
+ reconciliation_state:'PENDIENTE_VERIFICACION_MANUAL';
+ reconciliation_note:string;fiscal_status:'NO_EMITIDO_SUNAT';
+}

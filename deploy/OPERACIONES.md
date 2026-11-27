@@ -13,7 +13,7 @@
 5. `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend alembic upgrade head`
 6. Crear el primer usuario administrador (solo una vez, por consola interactiva): `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend python -m app.manage create-admin --username admin --name "Responsable autorizado"`. La contraseña se solicita sin eco y no queda en Git.
 7. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d`
-8. Verificar HTTPS, `GET /api/v1/health`, autenticación y compra de prueba; no utilizar datos personales reales hasta tener aprobación.
+8. Verificar HTTPS, `GET /api/v1/health` (proceso disponible) y `GET /api/v1/ready` (base de datos disponible), autenticación y compra de prueba; no utilizar datos personales reales hasta tener aprobación. El `healthcheck` del contenedor backend usa `/ready` para detectar fallos de conectividad y evitar confundir proceso vivo con servicio preparado.
 
 ## Backups y restauración
 - `bash deploy/backup.sh .env.production` genera archivo pg_dump en `backups/` + SHA256. No es backup remoto ni cifrado en reposo: exportarlo cifrado a almacenamiento distinto, con control de acceso y retención.
@@ -29,3 +29,5 @@
 - Los tickets internos NO son comprobantes de pago SUNAT. La activación de facturación electrónica requiere integración formal autorizada o proveedor OSE/PSE y validación tributaria aplicable.
 - Los números de fidelización son referenciales; no hay contrato ni programa activo de canjes.
 - La analítica usa estadísticas, no un modelo de IA entrenado, y no debe publicitarse como tal.
+## Asistente empresarial
+Por defecto `AI_API_KEY` y `AI_MODEL` están vacíos: la experiencia sigue operativa mediante reglas locales verificables. Para usar un proveedor externo, el responsable configura ambos valores en el entorno privado de despliegue (no en React, GitHub ni el navegador). Solo se envían indicadores agregados y preguntas operativas estandarizadas; deben revisarse condiciones de tratamiento, costo y disponibilidad del proveedor. El contenedor de producción recibe esos valores a través de Compose; para un entorno real se recomienda un almacén de secretos gestionado en lugar de ficheros sin cifrar.

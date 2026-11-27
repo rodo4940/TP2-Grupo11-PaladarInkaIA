@@ -10,6 +10,7 @@ on:
       - "scripts/e2e_responsive_matrix.py"
       - "scripts/e2e_studio_v4.py"
       - "scripts/e2e_inka_v5.py"
+      - "scripts/e2e_caja_v6.py"
       - "scripts/build_evidence_gallery.py"
       - "scripts/qa_security_smoke.py"
       - "frontend/src/**"
@@ -94,6 +95,8 @@ jobs:
         run: python scripts/e2e_studio_v4.py
       - name: Capture 40 additional Inka v5 login, billing, IA and responsive evidence
         run: python scripts/e2e_inka_v5.py
+      - name: Validate daily caja and capture 12 genuine responsive screenshots
+        run: python scripts/e2e_caja_v6.py
       - name: Verify HTTP security controls on running backend
         run: python scripts/qa_security_smoke.py
       - name: Verify screenshot manifest
@@ -103,13 +106,17 @@ jobs:
           folder=pathlib.Path('e2e/evidencias')
           obj=json.loads((folder/'e2e-results.json').read_text())
           pics=list(folder.glob('*.png'))
-          assert len(pics)==240,(len(pics),[p.name for p in pics])
-          assert len(obj['screenshots'])==240
-          assert len({x['file'] for x in obj['screenshots']})==240
+          assert len(pics)==252,(len(pics),[p.name for p in pics])
+          assert len(obj['screenshots'])==252
+          assert len({x['file'] for x in obj['screenshots']})==252
           inkav5=json.loads((folder/'inka-v5-results.json').read_text())
           assert inkav5['new_screenshots']==40 and inkav5['total_screenshots']==240
           assert not inkav5['javascript_errors']
           assert all(not x['horizontal_overflow'] for x in inkav5['scenarios'])
+          caja=json.loads((folder/'caja-v6-results.json').read_text())
+          assert caja['new_screenshots']==12 and caja['total_screenshots']==252
+          assert not caja['browser_errors']
+          assert all(x['png_width'] in (320,390,768,1440) and not x['overflow'] for x in caja['metrics'])
           studio=json.loads((folder/'studio-v4-results.json').read_text())
           assert studio['new_screenshots']==48 and studio['total_screenshots']==200
           assert not studio['horizontal_overflows'] and not studio['runtime_errors']
@@ -123,7 +130,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: paladar-inka-v5-240-real-screens
+          name: paladar-inka-v6-252-real-screens
           path: |
             e2e/evidencias/**
             backend-full-e2e.log

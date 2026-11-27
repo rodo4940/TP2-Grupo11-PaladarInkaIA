@@ -5,7 +5,7 @@ No representan boleta/factura ni se presentan a SUNAT. El asistente solo lee
 indicadores agregados; nunca modifica productos, stock, usuarios o cobros.
 """
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 import json
 import logging
@@ -80,6 +80,51 @@ def ledger(
         'currency': 'PEN',
         'fiscal_status': 'NO_EMITIDO_SUNAT',
         'disclaimer': NON_FISCAL,
+    }
+
+
+@router.get('/billing/daily-summary')
+def daily_summary(
+    day: date | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(cashier),
+) -> dict:
+    """Resumen conciliable de pagos por fecha local de Perú.
+
+    Calcula límites con zona America/Lima antes de consultar la columna UTC.
+    No modifica el estado de caja, no constituye arqueo firmado ni emisión SUNAT.
+    """
+    target = day or datetime.now(LIMA).date()
+    # Conversión a UTC antes del filtro: evita mezclar ventas alrededor de medianoche.
+    start_local = datetime.combine(target, time.min, tzinfo=LIMA)
+    end_local = datetime.combine(target + timedelta(days=1), time.min, tzinfo=LIMA)
+    start_utc = start_local.astimezone(timezone.utc)
+    end_utc = end_local.astimezone(timezone.utc)
+    payments = list(db.scalars(
+        select(Payment).where(
+            Payment.created_at >= start_utc,
+            Payment.created_at < end_utc,
+        ).order_by(Payment.id.desc())
+    ))
+    methods = ('cash', 'card', 'yape', 'plin')
+    totals = {method: {'count': 0, 'amount_cents': 0} for method in methods}
+    for payment in payments:
+        totals[payment.method]['count'] += 1
+        totals[payment.method]['amount_cents'] += payment.amount_cents
+    return {
+        'date': target.isoformat(),
+        'timezone': 'America/Lima',
+        'currency': 'PEN',
+        'payments_count': len(payments),
+        'gross_payments_cents': sum(p.amount_cents for p in payments),
+        'by_method': totals,
+        'entries': [billing_row(p) for p in payments],
+        'reconciliation_state': 'PENDIENTE_VERIFICACION_MANUAL',
+        'reconciliation_note': (
+            'Resumen de sistema: comparar efectivo, vouchers, Yape y Plin con sus '
+            'registros reales antes de firmar el cierre. No registra devolución ni arqueo físico.'
+        ),
+        'fiscal_status': 'NO_EMITIDO_SUNAT',
     }
 
 
@@ -177,10 +222,28 @@ def rule_answer(question: str, facts: dict) -> tuple[str, list[str]]:
             ['payments', 'orders', 'ingredients'])
 
 
+def permitted_business_intent(raw_question: str) -> str:
+    """Devuelve una pregunta estándar, nunca texto libre del operador.
+
+    Evita remitir teléfonos, correos, datos personales o instrucciones inyectadas
+    por el chat a un proveedor externo configurado en el servidor.
+    """
+    q = raw_question.casefold()
+    if any(w in q for w in ('stock', 'inventario', 'insumo', 'reponer', 'abastecer')):
+        return '¿Qué alertas de inventario debo revisar primero?'
+    if any(w in q for w in ('pedido', 'cocina', 'prepar', 'entreg', 'demora')):
+        return '¿Cómo priorizar los pedidos activos en cocina?'
+    if any(w in q for w in ('producto', 'pizza', 'vendido', 'popular', 'recomend')):
+        return '¿Qué productos tienen mayor demanda pagada?'
+    if any(w in q for w in ('venta', 'ingreso', 'caja', 'recaud', 'compar', 'dinero')):
+        return '¿Qué se observa de los pagos registrados hoy y ayer?'
+    return 'Resume brevemente los indicadores agregados y sus limitaciones.'
+
+
 def model_answer(question: str, facts: dict) -> str | None:
     """Opt-in de proveedor real. Sin claves la aplicación sigue operando en modo local.
 
-    No se envían nombres de clientes, teléfonos, contraseñas, tokens ni identificadores.
+    No se envían nombres de clientes, teléfonos, contraseñas ni tokens; tampoco el texto libre original del operador.
     La respuesta del modelo no tiene capacidad de crear órdenes ni ejecutar herramientas.
     """
     settings = get_settings()
@@ -205,7 +268,7 @@ def model_answer(question: str, facts: dict) -> str | None:
                 'input': (
                     'INDICADORES AGREGADOS (JSON): ' +
                     json.dumps(facts, ensure_ascii=False) +
-                    '\nPREGUNTA DEL USUARIO: ' + question
+                    '\nPREGUNTA OPERATIVA ESTANDARIZADA: ' + permitted_business_intent(question)
                 ),
                 'max_output_tokens': 320,
                 'store': False,

@@ -3,6 +3,7 @@ import type {RefObject} from 'react';
 import type {BillingDocument,BillingLedger} from '../types/domain';
 import {api} from '../services/api';
 import {InkaBrand} from './InkaBrand';
+import {CashCloseout} from './CashCloseout';
 
 const money=(v:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(v/100);
 const date=(v:string)=>new Date(v).toLocaleString('es-PE',{timeZone:'America/Lima',dateStyle:'medium',timeStyle:'short'});
@@ -50,6 +51,7 @@ export function BillingCenter({token}:{token:string}){
      <article><span>Ingreso registrado</span><strong>{ledger?money(ledger.total_cents):'—'}</strong><small>Total acumulado de pagos</small></article>
      <article><span>Importe filtrado</span><strong>{money(totalFiltered)}</strong><small>{filtered.length} documentos visibles</small></article>
    </div>
+   <CashCloseout token={token}/>
    <div className="billing-columns">
      <section className="panel billing-list">
        <div className="panel-head"><div><h3>Historial de pagos</h3><p>Una constancia por pago registrado; sin duplicar cobros</p></div><button className="secondary" type="button" disabled={loading} onClick={()=>void refresh()}>{loading?'Consultando…':'Actualizar'}</button></div>
