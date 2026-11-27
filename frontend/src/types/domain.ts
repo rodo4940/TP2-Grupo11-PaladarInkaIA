@@ -52,7 +52,7 @@ export interface DailyCashSummary {
  reconciliation_note:string;fiscal_status:'NO_EMITIDO_SUNAT';
  confirmed_refunds_cents:number;net_cash_flow_cents:number;refunds_count:number;
  refunds_by_method:Record<'cash'|'card'|'yape'|'plin',number>;
- internal_closeout_state:'submitted'|'approved'|null;
+ internal_closeout_state:'submitted'|'approved'|'finalized'|null;
 }
 
 /** La confirmación de devolución es HUMANA; la API no mueve dinero. */
@@ -62,9 +62,21 @@ export interface InternalRefund {
  external_reference:string|null;created_at:string;confirmed_at:string|null;disclaimer:string;
 }
 export interface RegisteredCashCloseout {
- id:number;day:string;state:'submitted'|'approved';opening_cash_cents:number;
+ id:number;day:string;state:'submitted'|'approved'|'finalized';opening_cash_cents:number;
  expected_cash_cents:number;counted_cash_cents:number;variance_cents:number;
  gross_payments_cents:number;confirmed_refunds_cents:number;payments_count:number;
  refunds_count:number;submitted_by:number;approved_by:number|null;note:string;
  approval_note:string;created_at:string;approved_at:string|null;stale:boolean;disclaimer:string;
+ finalized_at:string|null;finalized_by:number|null;snapshot_sha256:string|null;
+}
+
+/** DEMO: no es CPE tributario ni CDR emitido por SUNAT. */
+export interface FiscalDemoDocument {
+ id:number;payment_id:number;document_type:'01'|'03'|'07';
+ document_label:string;number:string;issue_date:string;currency:'PEN';
+ total_cents:number;net_cents:number;tax_cents:number;affectation_code:string;
+ customer_document_type:string;customer_document_number:string;customer_name:string;
+ reference_document_id:number|null;status:'SIMULADO_VALIDADO_LOCALMENTE';
+ sha256:string;issuer_ruc:string;digital_signature:false;sunat_submitted:false;
+ official_cdr:false;warning:string;xml_demo?:string;
 }

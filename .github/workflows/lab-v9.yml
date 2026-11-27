@@ -1,0 +1,43 @@
+name: V9 Fiscal, ML and Laboratory Acceptance
+on:
+  push:
+    branches: [feature/paladar-v9-fiscal-ml-qa-launch]
+    paths: ["backend/**", "scripts/qa_model_v9.py", ".github/workflows/lab-v9.yml"]
+  pull_request:
+    branches: [release/paladar-inka-v1-piloto]
+    paths: ["backend/**", "scripts/qa_model_v9.py", ".github/workflows/lab-v9.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  functional-laboratory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Install backend and test tools
+        run: python -m pip install "./backend[test]"
+      - name: Run 16 lab-UAT cases, model, simulated CPE and closeout tests
+        working-directory: backend
+        env:
+          APP_ENV: test
+          JWT_SECRET: only-ci-synthetic-secret-not-for-production
+        run: |
+          mkdir -p ../e2e/lab-v9
+          pytest -q tests/test_uat_lab_v9.py tests/test_fiscal_ml_lab.py --junitxml=../e2e/lab-v9/LAB_TESTS.xml
+      - name: Produce reproducible model evidence and SHA-256
+        env:
+          PYTHONPATH: backend
+        run: python scripts/qa_model_v9.py
+      - name: Check backup/restore shell scripts syntax
+        run: |
+          bash -n deploy/backup_encrypted.sh
+          bash -n deploy/restore_encrypted.sh
+      - name: Archive laboratory evidence, never real signatures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paladar-v9-ml-fiscal-uat-laboratorio
+          path: e2e/lab-v9/**

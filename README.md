@@ -151,3 +151,12 @@ La versión integrada en la rama `release/paladar-inka-v1-piloto` sirve como ent
 
 **Equipo del proyecto:** Jamil Shandee Hinojosa Ttito · Jose Paolo Champi Palacios · Rodolfo Muñoz Cruz · Erik Alexander Callañaupa Quispe.  
 **Asignatura:** Taller de Proyectos 2 · Universidad Continental.
+
+
+## Funcionalidades v9 (laboratorio y controles internos)
+
+La rama v9 añade facturación **simulada** (boleta, factura y nota de crédito con XML UBL parcial, control de recepción local y SHA-256; **no SUNAT**), modelo predictivo Ridge **realmente entrenado con datos sintéticos**, cierre de caja interno definitivo con SHA-256, copias de seguridad cifradas para instalación autorizada y 16 pruebas UAT **de laboratorio**, diferentes de la aceptación humana del restaurante.
+
+Documentos: [Simulador SUNAT](docs/SUNAT_SIMULADOR_V9.md) · [Modelo ML](docs/MODELO_ML_ENTRENADO_V9.md) · [UAT laboratorio](docs/UAT_LAB_V9_RESULTADOS.md) · [Aprobación y firmas](docs/DECLARACION_APROBACION_V9.md) · [Backups cifrados](docs/BACKUP_CIFRADO_V9.md).
+
+**No confundir cierre técnico con GO-LIVE comercial.** El módulo de laboratorio no emite comprobantes legales, las devoluciones se confirman manualmente y el modelo no predice ventas comerciales sin validación de dataset real.

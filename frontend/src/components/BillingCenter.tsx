@@ -5,6 +5,7 @@ import {api} from '../services/api';
 import {InkaBrand} from './InkaBrand';
 import {CashCloseout} from './CashCloseout';
 import {RefundCenter} from './RefundCenter';
+import {FiscalDemoCenter} from './FiscalDemoCenter';
 
 const money=(v:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(v/100);
 const date=(v:string)=>new Date(v).toLocaleString('es-PE',{timeZone:'America/Lima',dateStyle:'medium',timeStyle:'short'});
@@ -45,7 +46,7 @@ export function BillingCenter({token,role,userId}:{token:string;role:Role;userId
      <div><span className="eyebrow">CAJA Y TRAZABILIDAD</span><h1>Caja y comprobantes</h1><p>Consulta los cobros registrados y reimprime constancias internas de cada operación.</p></div>
      <span className="billing-title-icon" aria-hidden="true"><InkaBrand size={92}/></span>
    </div>
-   <div className="billing-disclaimer" role="note"><span aria-hidden="true">ⓘ</span><span><strong>Constancias internas — no son boletas ni facturas electrónicas.</strong> Para emitir comprobantes tributarios válidos se necesita integrar y validar el sistema de emisión de SUNAT. No se calcula IGV ni se asignan series fiscales.</span></div>
+   <div className="billing-disclaimer" role="note"><span aria-hidden="true">ⓘ</span><span><strong>Constancias internas — no son boletas ni facturas electrónicas.</strong> Para emitir comprobantes tributarios válidos se necesita integrar y validar el sistema de emisión de SUNAT. El módulo de laboratorio, más abajo, calcula importes referenciales y series ficticias FDEM/BDEM. Nunca emite CPE reales.</span></div>
    {error&&<div role="alert" className="notice error billing-error">{error}<button type="button" className="secondary" onClick={()=>void refresh()}>Reintentar</button></div>}
    <div className="billing-metrics">
      <article><span>Pagos confirmados</span><strong>{ledger?.count??'—'}</strong><small>Registros persistidos</small></article>
@@ -54,6 +55,7 @@ export function BillingCenter({token,role,userId}:{token:string;role:Role;userId
    </div>
    <CashCloseout token={token} role={role} userId={userId}/>
    <RefundCenter token={token} role={role} userId={userId} entries={entries} onChanged={()=>void refresh()}/>
+   <FiscalDemoCenter token={token} role={role} payments={entries}/>
    <div className="billing-columns">
      <section className="panel billing-list">
        <div className="panel-head"><div><h3>Historial de pagos</h3><p>Una constancia por pago registrado; sin duplicar cobros</p></div><button className="secondary" type="button" disabled={loading} onClick={()=>void refresh()}>{loading?'Consultando…':'Actualizar'}</button></div>

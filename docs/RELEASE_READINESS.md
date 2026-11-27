@@ -39,3 +39,18 @@ La revisión incluye PATCH/POST de cambio y restablecimiento de contraseña con 
 ### Control de acceso adicional implementado en v8
 - Bloqueo temporal persistente por cuenta tras varios intentos fallidos; configuración en entorno mediante `LOGIN_MAX_ATTEMPTS` y `LOGIN_LOCKOUT_MINUTES`. El administrador desbloquea mediante restablecimiento seguro de contraseña.
 - No sustituye rate limiting por origen, MFA, WAF ni revisión de seguridad externa. Puede ser usado indebidamente para bloquear cuentas conocidas; documentar atención al bloqueo.
+
+## Estado v9 (NO GO comercial)
+- [x] Laboratorio XML representativo de UBL 2.1 para documento 01/03/07, validaciones locales, idempotencia y trazabilidad con SHA-256. **No es SUNAT auténtico**.
+- [x] Modelo Ridge entrenado en laboratorio (dataset sintético y holdout). **No entrenado ni validado sobre ventas reales del restaurante**.
+- [x] Cierre interno finalizado y protegido con hash; bloqueo de registro de nuevo cobro en período finalizado.
+- [x] Scripts de copia remota cifrada con checksum y restauración con confirmación de aislamiento. **No ejecutados en host empresarial**.
+- [x] Matriz de 16 casos de pruebas `LAB-UAT` en pytest + registros JUnit; evidencia comercial requiere prueba humana.
+- [ ] Ejecutar los casos UAT con el restaurante y adjuntar firmas auténticas.
+- [ ] Certificar obligaciones SUNAT con credenciales/certificados oficiales y contador; laboratorio no es emisión legal.
+- [ ] Conseguir dataset autorizado de ventas y validar modelo empresarial.
+- [ ] Ensayar restauración de copias externas en infraestructura y definir RPO/RTO.
+- [ ] Revisión externa de seguridad, carga y protección de datos.
+- [ ] Obtener acta firmada y decisión empresarial para producción.
+
+**Aprobación declarada:** el solicitante señaló que la pizzería aprobó el proyecto, sin proporcionar un acta con firma verificable. Ver `docs/DECLARACION_APROBACION_V9.md`. No convertir esta afirmación en firma.
