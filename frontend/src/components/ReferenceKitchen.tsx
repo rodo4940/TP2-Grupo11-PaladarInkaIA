@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import type {Order,OrderStatus} from '../types/domain';
 
-const statusGroups:OrderStatus[]=['pending','preparing','ready','delivered'];
 const labels:Record<string,string>={pending:'Pendiente',preparing:'En preparación',ready:'Listo para entregar',delivered:'Entregado'};
 const next:Partial<Record<OrderStatus,OrderStatus>>={pending:'preparing',preparing:'ready',ready:'delivered'};
 type Props={orders:Order[];busy:boolean;onChange:(order:Order,status:OrderStatus)=>void;onRefresh:()=>Promise<unknown>};

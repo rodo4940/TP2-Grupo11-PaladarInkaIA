@@ -9,7 +9,7 @@ function Trend({values}:{values:number[]}) {
  const area=path+` L ${width-pad} ${height-pad} L ${pad} ${height-pad} Z`;
  return <svg viewBox="0 0 560 160" role="img" aria-label="Evolución de pedidos pagados por día en los últimos siete días" preserveAspectRatio="none" className="pi-trend-svg"><defs><linearGradient id="pi-trend-fill" x1="0" x2="0" y1="0" y2="1"><stop stopColor="#eda82e" stopOpacity=".47"/><stop offset="1" stopColor="#eda82e" stopOpacity=".02"/></linearGradient></defs><path d={area} fill="url(#pi-trend-fill)"/><path d={path} stroke="#edac35" strokeWidth="3.5" fill="none" strokeLinejoin="round" strokeLinecap="round"/>{values.map((v,i)=><circle key={i} cx={pad+i*(width-2*pad)/6} cy={height-pad-(v/max)*(height-2*pad)} r="4.5" fill="#ffcd57" stroke="#1c1b18" strokeWidth="1.5"/>)}</svg>
 }
-export function ReferenceDashboard({data,orders,report,role,user,onNavigate,refreshedAt}:Props){
+export function ReferenceDashboard({data,orders,report,role,onNavigate,refreshedAt}:Props){
  const today=new Date();
  const dates=Array.from({length:7},(_,i)=>{const d=new Date(today);d.setHours(0,0,0,0);d.setDate(d.getDate()-(6-i));return d;});
  const activity=dates.map(d=>orders.filter(o=>o.paid&&new Date(o.created_at).toDateString()===d.toDateString()).length);

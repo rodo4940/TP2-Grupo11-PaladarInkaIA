@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {FormEvent, ReactNode} from 'react';
 import {api, post, patch, put, ApiError} from './services/api';
-import {OperationsOverview} from './components/OperationsOverview';
 import {SupportCenter} from './components/SupportCenter';
 import {SectionArtwork} from './components/SectionArtwork';
 import {MobileDock} from './components/MobileDock';
@@ -12,7 +11,7 @@ import {TrainedDemoPanel} from './components/TrainedDemoPanel';
 import {ReferenceDashboard} from './components/ReferenceDashboard';
 import {ReferencePOS} from './components/ReferencePOS';
 import {ReferenceKitchen} from './components/ReferenceKitchen';
-import {HERO_PHOTO, productImage} from './assets/menuPhotos';
+import {HERO_PHOTO} from './assets/menuPhotos';
 import type {AuthResponse, User, Role, Product, Ingredient, Customer, Order, OrderStatus, StockMovement, Dashboard, Report, Recommendation, Forecast, Audit, SystemInfo, CustomerInsights, InternalReceipt} from './types/domain';
 
 type View = 'dashboard'|'pos'|'orders'|'kitchen'|'inventory'|'products'|'customers'|'reports'|'ai'|'users'|'settings'|'billing';
@@ -35,9 +34,6 @@ const tabs: Array<{id:View;label:string;icon:string;roles:Role[]}>= [
 {id:'users',label:'Usuarios',icon:'♧',roles:['admin']},
 {id:'settings',label:'Configuración',icon:'⚙',roles:['admin','cashier','kitchen']},
 ];
-function PizzaMark({size=42}:{size?:number}){
- return <svg className="pizza-logo" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" fill="none"><path d="M11 45C18 22 32 11 52 10L44 55C31 52 20 50 11 45Z" fill="#f7bb46" stroke="#d78a28" strokeWidth="2.5"/><path d="M12 45C13 47 29 54 44 56" stroke="#c77d37" strokeWidth="8" strokeLinecap="round"/><path d="M17 39C24 21 36 17 47 15" stroke="#fbe2a5" strokeWidth="3" strokeLinecap="round"/><circle cx="32" cy="30" r="5" fill="#df4233"/><circle cx="23" cy="42" r="4" fill="#df4233"/><circle cx="41" cy="44" r="4" fill="#db4737"/><path d="M29 19Q24 13 20 20Q25 23 29 19ZM35 42Q36 35 43 34Q42 40 35 42Z" fill="#369567"/></svg>
-}
 const icons:Record<View,ReactNode>={
  dashboard:<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
  pos:<><path d="m3 4 2 1 2 12h12l2-9H6"/><circle cx="9" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></>,
@@ -56,14 +52,6 @@ function NavGlyph({id}:{id:View}){return <svg viewBox="0 0 24 24" width="20" hei
 function Field({title,children}:{title:string;children:ReactNode}){return <label className="field"><span>{title}</span>{children}</label>}
 function Empty({text}:{text:string}){return <div className="empty empty-designed" role="status"><svg width="68" height="68" viewBox="0 0 68 68" aria-hidden="true" fill="none"><rect x="9" y="19" width="50" height="38" rx="12" fill="#f1e8d8"/><path d="M19 26h30v22H19z" fill="#faf5e9" stroke="#ceb38b" strokeWidth="2"/><path d="M27 34h14M27 41h9" stroke="#b18e65" strokeWidth="3" strokeLinecap="round"/><circle cx="49" cy="18" r="10" fill="#dfebdc"/><path d="m45 18 3 3 6-7" stroke="#4b8766" strokeWidth="2.5" strokeLinecap="round"/></svg><p>{text}</p></div>}
 function StateTag({status}:{status:OrderStatus}){return <span className={`tag tag-${status}`}>{labels[status]}</span>}
-function FoodPhoto({product,small=false}:{product:Product;small?:boolean}){
- const src=productImage(product);
- return <span className={`food-picture${small?' food-picture-small':''}`}>
-  {src&&<span className="photo-illustration" aria-hidden="true"><PizzaMark size={small?32:62}/></span>}
-  {src?<img src={src} alt={`Imagen ilustrativa de ${product.name}`} loading={small?'lazy':'eager'} decoding="async" onError={e=>{const img=e.currentTarget;if(img.dataset.fallback!=='illustration'){img.dataset.fallback='illustration';img.src='/illustrations/pizza-artisan.svg';}else{img.hidden=true;img.parentElement?.classList.add('photo-unavailable')}}}/>:<span className="photo-placeholder" aria-hidden="true">Imagen pendiente</span>}
-  {!small&&<span className="food-top">IMAGEN REFERENCIAL</span>}
- </span>;
-}
 function Tile({label,value,detail,icon}:{label:string;value:string|number;detail?:string;icon:string}){return <div className="tile"><span className="tile-icon">{icon}</span><span><small>{label}</small><strong>{value}</strong>{detail && <em>{detail}</em>}</span></div>}
 
 function App(){
@@ -80,9 +68,7 @@ function App(){
  const [report,setReport]=useState<Report|null>(null),[recommendation,setRecommendation]=useState<Recommendation|null>(null),[forecast,setForecast]=useState<Forecast|null>(null);
  const [users,setUsers]=useState<User[]>([]),[audit,setAudit]=useState<Audit[]>([]),[system,setSystem]=useState<SystemInfo|null>(null);
  const [form,setForm]=useState({username:'',password:''});
- const [cart,setCart]=useState<Record<number,number>>({});
- const [customerId,setCustomerId]=useState(''),[tableLabel,setTableLabel]=useState('Mostrador'),[orderNote,setOrderNote]=useState('');
- const [currentOrder,setCurrentOrder]=useState<Order|null>(null),[paymentMethod,setPaymentMethod]=useState('cash');
+ const [currentOrder,setCurrentOrder]=useState<Order|null>(null);
  const [stockId,setStockId]=useState(''),[stockAmount,setStockAmount]=useState(''),[stockReason,setStockReason]=useState('Compra de proveedor');
  const [productForm,setProductForm]=useState({sku:'',name:'',category:'Pizzas',price:'32'});
  const [recipeProduct,setRecipeProduct]=useState(''),[recipeIngredient,setRecipeIngredient]=useState(''),[recipeQty,setRecipeQty]=useState('');
@@ -91,12 +77,9 @@ function App(){
  const [customerForm,setCustomerForm]=useState({name:'',phone:'',notes:''});
  const [userForm,setUserForm]=useState({username:'',full_name:'',password:'',role:'cashier'});
  const [filter,setFilter]=useState<OrderStatus|'all'>('all');
- const [posSearch,setPosSearch]=useState('');
- const [posCategory,setPosCategory]=useState('Todos');
  const [orderSearch,setOrderSearch]=useState('');
  const [inventorySearch,setInventorySearch]=useState('');
  const [customerSearch,setCustomerSearch]=useState('');
- const [orderType,setOrderType]=useState<'Salón'|'Recojo'|'Delivery'>('Salón');
  const [mobileNav,setMobileNav]=useState(false);
  const mobileMenuRef=useRef<HTMLButtonElement>(null);
  const sidebarCloseRef=useRef<HTMLButtonElement>(null);
@@ -192,11 +175,7 @@ function App(){
   setLoading(true);
   try{await fn();after?.();notify(message);await refresh()}catch(e){notify(e instanceof Error?e.message:'Error al procesar','error')}finally{setLoading(false)}
  };
- const cartItems=useMemo(()=>Object.entries(cart).filter(([,qty])=>qty>0).map(([id,quantity])=>({product:products.find(p=>p.id===Number(id)),quantity})).filter((x):x is {product:Product;quantity:number}=>Boolean(x.product)),[cart,products]);
- const cartTotal=cartItems.reduce((n,x)=>n+x.product.price_cents*x.quantity,0);
  const visibleOrders=orders.filter(x=>(filter==='all'||x.status===filter)&&(`${x.id} ${x.table_label} ${x.items.map(i=>i.product_name).join(' ')}`.toLowerCase().includes(orderSearch.toLowerCase().trim())));
- const visibleProducts=products.filter(p=>(posCategory==='Todos'||p.category===posCategory)&&(`${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(posSearch.toLowerCase().trim())));
- const productCategories=['Todos',...new Set(products.map(p=>p.category))];
  const visibleIngredients=ingredients.filter(i=>`${i.name} ${i.sku}`.toLowerCase().includes(inventorySearch.toLowerCase().trim()));
  const visibleCustomers=customers.filter(c=>`${c.name} ${c.phone||''}`.toLowerCase().includes(customerSearch.toLowerCase().trim()));
  const exportCSV=(filename:string,headers:string[],rows:(string|number)[][])=>{
@@ -214,7 +193,6 @@ function App(){
  };
  const showReceipt=async(id:number)=>{try{setReceipt(await api<InternalReceipt>(`/orders/${id}/receipt`,token))}catch(e){notify(e instanceof Error?e.message:'No existe ticket de este pedido','error')}};
  const selectProduct=(id:string)=>{setEditProductId(id);const product=fullProducts.find(x=>String(x.id)===id);if(product)setEditProductForm({name:product.name,category:product.category,price:(product.price_cents/100).toFixed(2),active:product.active})};
- const addToCart=(id:number,n:number)=>setCart(old=>({...old,[id]:Math.max(0,Math.min(100,(old[id]||0)+n))}));
  async function signIn(e:FormEvent<HTMLFormElement>){e.preventDefault();setLoading(true);setFlash(null);
   try{const result=await api<AuthResponse>('/auth/token',undefined,{method:'POST',body:JSON.stringify(form)});
     const next={token:result.access_token,user:result.user};sessionStorage.setItem('paladar_session',JSON.stringify(next));setSession(next);setForm({username:'',password:''});}
