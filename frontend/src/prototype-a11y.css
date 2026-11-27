@@ -52,3 +52,30 @@
 .view-ai .billing-disclaimer strong,.view-ai .copilot-context-heading h3{color:#f2e9d8!important}
 .view-ai .copilot-context-heading .eyebrow{color:#f0be57!important}
 .view-ai .copilot-context-heading p,.view-ai .copilot-context-card p,.view-ai .billing-disclaimer span{color:#d0c2ac!important}
+
+/* Ajuste fino revisado con las capturas Chromium del POS (1440 px). */
+@media(max-width:1599px){.pi-topbar-brand small{display:none!important}}
+@media(min-width:1300px){.pi-pos-products{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pi-pos-ticket{padding:10px 12px!important}
+.pi-pos-modes{margin-bottom:7px!important}
+.pi-pos-modes button{padding:7px 4px!important}
+.pi-pos-selector{margin-bottom:6px!important}
+.pi-pos-selector select{min-height:32px!important}
+.pi-pos-reference{margin-bottom:7px!important}
+.pi-pos-reference input{min-height:32px!important}
+.pi-pos-items-head{padding:6px 0!important}
+.pi-pos .pi-empty{padding:10px!important}
+.pi-pos-note{margin:6px 0!important}
+.pi-pos-note textarea{min-height:35px!important;height:35px!important;padding:7px!important}
+.pi-pos-totals{padding-top:6px!important}
+.pi-pos-totals>div{margin-bottom:4px!important}
+.pi-pos-totals .pi-pos-grand{padding-top:6px!important;margin-top:5px!important}
+.pi-pos-pay-title{margin:7px 0 5px!important}
+.pi-pos-pay-methods button{padding:5px 2px!important;font-size:16px!important}
+.pi-pos-cash{margin:6px 0!important}
+.pi-pos-cash input{min-height:34px!important}
+.pi-pos-cash>div{padding:3px 5px!important}
+.pi-pos-disclaimer{font-size:9px!important;margin:6px 0!important}
+.pi-pos-charge{min-height:41px!important;margin-top:4px!important}
+@media(max-width:880px){.pi-pos-products{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.pi-pos-products{grid-template-columns:repeat(2,minmax(0,1fr))}}
