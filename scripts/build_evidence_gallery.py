@@ -35,7 +35,7 @@ for item in screens:
         'source':item.get('source', 'Chromium/Playwright sobre entorno de QA'),
     })
 records.sort(key=lambda row:row['n'])
-assert [r['n'] for r in records]==list(range(1,241)), 'No se encuentra numeración consecutiva 01-252'
+assert [r['n'] for r in records]==list(range(1,253)), 'No se encuentra numeración consecutiva 01-252'
 
 with (ROOT/'MANIFIESTO_SHA256_252.csv').open('w',newline='',encoding='utf-8-sig') as f:
     writer=csv.DictWriter(f,fieldnames=list(records[0]))
