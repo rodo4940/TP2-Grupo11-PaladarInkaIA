@@ -23,6 +23,10 @@ La [mejora de caja y seguridad de IA](https://github.com/rodo4940/TP2-Grupo11-Pa
 
 **Estado:** candidato funcional a piloto controlado. Para apertura comercial se exigen UAT firmado, procesos de devolución y arqueo, tratamiento de datos aprobado, respaldos externos/restauración ensayada e integración tributaria autorizada de acuerdo con las obligaciones del establecimiento.
 
+### Experiencia adaptable v7
+
+La versión integrada incluye [rediseño responsive de los doce módulos](docs/RESPONSIVE_V7.md): navegación táctil con foco accesible, tablas operativas como tarjetas legibles en móviles y distribución fluida para teléfonos, tabletas y escritorio. Se validó en **7 tamaños (320–1440 px) con 91 capturas Chromium originales**: [ver ejecución de QA](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45923342653) y [PR #19 fusionado](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/19). Los resultados se guardan como artefacto descargable desde GitHub Actions, incluidos PNG, hashes SHA-256 y galería HTML. Son pruebas de laboratorio, no UAT empresarial.
+
 ## 1. Iniciar el sistema
 
 Descarga la rama **[`release/paladar-inka-v1-piloto`](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/tree/release/paladar-inka-v1-piloto)**. Los archivos de `main` pueden seguir una revisión diferente mientras la promoción a la rama protegida esté pendiente.
