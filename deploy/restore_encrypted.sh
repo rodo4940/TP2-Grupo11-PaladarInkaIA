@@ -19,5 +19,7 @@ TEMP="$(mktemp --tmpdir paladar_restore_XXXXXXXX.dump)"
 trap 'rm -f "$TEMP"' EXIT
 age -d -i "$AGE_IDENTITY_FILE" -o "$TEMP" "$FILE"
 [[ -s "$TEMP" ]] || { echo 'El dump descifrado está vacío' >&2; exit 1; }
+sha256sum "$TEMP" > "$TEMP.sha256"
+trap 'rm -f "$TEMP" "$TEMP.sha256"' EXIT
 CONFIRM_RESTORE=PERDER_DATOS_ACTUALES bash deploy/restore.sh "$TEMP" "$ENV_FILE"
 echo "AVISO: validar saldos, roles, inventario, migración y tiempos RTO antes de acreditar recuperación."
