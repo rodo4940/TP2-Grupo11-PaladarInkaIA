@@ -82,7 +82,7 @@ export function CashCloseout({token,role,userId}:{token:string;role:Role;userId:
         <div className="cash-variance" id="cash-variance-note">{variance===null?'Ingresa el efectivo contado para comparar.':<><span>Diferencia respecto al efectivo registrado</span><strong className={variance===0?'cash-balanced':variance>0?'cash-surplus':'cash-deficit'}>{variance>0?'+':''}{amount(variance)}</strong></>}</div>
       </div>
      </div>
-     <p className="cash-closeout-legal"><strong>Sin cierre registrado:</strong> este es un reporte informativo y una comparación local, no un arqueo firmado. La cantidad contada no se guarda ni modifica transacciones. Revisar vouchers, efectivo, faltantes y devoluciones pendientes antes de aprobar el cierre con la persona responsable. No es comprobante tributario.</p>
+     <p className="cash-closeout-legal"><strong>Resumen informativo:</strong> la cantidad contada en este campo no se guarda hasta que envíes el arqueo registrado. La aprobación interna requiere otra persona responsable. Revisar vouchers, efectivo, faltantes y devoluciones pendientes antes de aprobar el cierre con la persona responsable. No es comprobante tributario.</p>
    </div>}
    {summary&&<RegisteredCloseout token={token} day={day} role={role} userId={userId} countedCashCents={cashValue}/>}
  </section>;
