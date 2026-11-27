@@ -13,7 +13,7 @@
 5. `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend alembic upgrade head`
 6. Crear el primer usuario administrador (solo una vez, por consola interactiva): `docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend python -m app.manage create-admin --username admin --name "Responsable autorizado"`. La contraseña se solicita sin eco y no queda en Git.
 7. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d`
-8. Verificar HTTPS, `GET /api/v1/health`, autenticación y compra de prueba; no utilizar datos personales reales hasta tener aprobación.
+8. Verificar HTTPS, `GET /api/v1/health` (proceso disponible) y `GET /api/v1/ready` (base de datos disponible), autenticación y compra de prueba; no utilizar datos personales reales hasta tener aprobación. El `healthcheck` del contenedor backend usa `/ready` para detectar fallos de conectividad y evitar confundir proceso vivo con servicio preparado.
 
 ## Backups y restauración
 - `bash deploy/backup.sh .env.production` genera archivo pg_dump en `backups/` + SHA256. No es backup remoto ni cifrado en reposo: exportarlo cifrado a almacenamiento distinto, con control de acceso y retención.
