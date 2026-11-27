@@ -54,6 +54,15 @@ def snap(page, name, description):
     assert_layout(page, name)
     index += 1
     file_name = f'{index:03d}_{name}.png'
+    # Antes de fotografiar la página larga, volver al inicio evita que la
+    # topbar sticky y el menú lateral aparezcan a mitad del documento.
+    # Retirar el foco visual evita que el skip-link quede sobre la captura.
+    page.evaluate("""() => {
+      const node=document.activeElement;
+      if(node instanceof HTMLElement) node.blur();
+      window.scrollTo(0,0);
+    }""")
+    page.wait_for_timeout(80)
     page.screenshot(path=str(OUT / file_name), full_page=True, animations='disabled')
     # Segunda toma auténtica, sin editar ni deformar: encuadre fijo del dispositivo.
     # En capturas extensas el dock inferior se ve a mitad de la página al combinar
