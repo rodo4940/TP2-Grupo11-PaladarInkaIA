@@ -15,6 +15,14 @@
 
 La implementación utiliza **React 19 + TypeScript + Vite** en el cliente, **FastAPI + Python 3.12 + SQLAlchemy** en la API y **PostgreSQL 17** con migraciones Alembic. La interfaz incluye identidad visual original inspirada en geometrías andinas, fotografías gastronómicas de referencia, navegación adaptada a cada rol y un centro de operaciones con información del servidor.
 
+### Actualización integrada: cierre de caja operativo v6
+
+La [mejora de caja y seguridad de IA](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/18) se encuentra en esta rama. Su ejecución de control: [GitHub Actions · 252 capturas reales](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45921817602) (segundo intento aprobado). Se verificaron **61 pruebas de backend**, build React/TypeScript, instalación limpia con Docker, controles estáticos y revisión automatizada preliminar de accesibilidad.
+
+**Nuevo:** resumen diario de cobros por fecha `America/Lima`, con diferencias entre efectivo contado y registrado, desglose por efectivo, Yape, Plin y tarjeta, y CSV sin información personal. El conteo manual no se guarda ni aprueba un cierre; los tickets siguen siendo internos. La IA opcional sustituye preguntas libres por intenciones estandarizadas antes de comunicar indicadores agregados a un modelo externo. La supervisión de producción usa el endpoint `/api/v1/ready`, que verifica la conexión con la base de datos. Véase [Operación de caja y requisitos de go-live](docs/OPERACION_CAJA_V6_Y_GO_LIVE.md).
+
+**Estado:** candidato funcional a piloto controlado. Para apertura comercial se exigen UAT firmado, procesos de devolución y arqueo, tratamiento de datos aprobado, respaldos externos/restauración ensayada e integración tributaria autorizada de acuerdo con las obligaciones del establecimiento.
+
 ## 1. Iniciar el sistema
 
 Descarga la rama **[`release/paladar-inka-v1-piloto`](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/tree/release/paladar-inka-v1-piloto)**. Los archivos de `main` pueden seguir una revisión diferente mientras la promoción a la rama protegida esté pendiente.
@@ -43,7 +51,7 @@ Usuarios de demostración: `admin`, `cajero`, `cocina`. La contraseña de semill
 |---|---|---|
 | Panel general | Consultar ventas cobradas, pedidos, alertas, operaciones y tendencias | Todos los roles, con datos autorizados |
 | Ventas / POS | Buscar productos, armar carrito, indicar mesa/recojo/delivery, confirmar pedidos y registrar pagos | Administración y caja |
-| Caja y comprobantes | Consultar pagos confirmados, filtrar métodos, revisar y reimprimir ticket interno `INT-######` | Administración y caja |
+| Caja y comprobantes | Consultar pagos, filtrar y reimprimir tickets internos `INT-######`; conciliar cobros diarios, comparar efectivo y exportar CSV | Administración y caja |
 | Pedidos | Filtrar, consultar seguimiento, revisar estado de pago, detalle y tickets internos | Roles autorizados |
 | Cocina | Recibir comandas y mover estados: pendiente → preparando → listo → entregado | Administración y cocina |
 | Inventario / Kardex | Consultar existencias, mínimos, consumos por pedido y ajustes autorizados | Administración; consulta según rol |
