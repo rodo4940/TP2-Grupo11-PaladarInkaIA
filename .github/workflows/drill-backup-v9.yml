@@ -1,0 +1,71 @@
+name: V9 Encrypted Backup and Restore Laboratory Drill
+on:
+  push:
+    branches: [feature/paladar-v9-fiscal-ml-qa-launch]
+    paths: ["deploy/**", "docker-compose.prod.yml", ".github/workflows/drill-backup-v9.yml"]
+  pull_request:
+    branches: [release/paladar-inka-v1-piloto]
+    paths: ["deploy/**", "docker-compose.prod.yml", ".github/workflows/drill-backup-v9.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install encryption/remote storage clients
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age rclone
+      - name: Generate isolated demo infrastructure and key
+        run: |
+          mkdir -p e2e/dr-v9 dr-remote
+          age-keygen -o /tmp/paladar_age_test_identity >/dev/null
+          chmod 600 /tmp/paladar_age_test_identity
+          cat > .env.dr-test <<'EOF'
+          PALADAR_DOMAIN=lab.invalid
+          DATABASE_NAME=paladar_dr_lab
+          DATABASE_USER=dr_lab
+          DATABASE_PASSWORD=not_for_production_lab_2026
+          JWT_SECRET=never_use_test_secret_outside_actions_2026
+          EOF
+          chmod 600 .env.dr-test
+          docker compose --env-file .env.dr-test -f docker-compose.prod.yml up -d db
+          for attempt in $(seq 1 35); do
+            if docker compose --env-file .env.dr-test -f docker-compose.prod.yml exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >/dev/null; then break; fi
+            sleep 2
+          done
+      - name: Write fictitious record, encrypt remotely and restore in isolation
+        run: |
+          docker compose --env-file .env.dr-test -f docker-compose.prod.yml exec -T db sh -ec \
+            'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE TABLE dr_lab(marker INTEGER NOT NULL); INSERT INTO dr_lab VALUES (42)"'
+          export AGE_RECIPIENT="$(age-keygen -y /tmp/paladar_age_test_identity)"
+          export BACKUP_REMOTE="local:${PWD}/dr-remote"
+          export RCLONE_CONFIG_LOCAL_TYPE=local
+          bash deploy/backup_encrypted.sh .env.dr-test
+          FILE="$(find backups/encrypted -maxdepth 1 -name '*.dump.age' -type f | head -n 1)"
+          test -s "$FILE"
+          docker compose --env-file .env.dr-test -f docker-compose.prod.yml exec -T db sh -ec \
+            'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "UPDATE dr_lab SET marker=999"'
+          export AGE_IDENTITY_FILE=/tmp/paladar_age_test_identity
+          export RESTORE_ISOLATED=YES_I_CONFIRMED_ISOLATION
+          export CONFIRM_RESTORE=PERDER_DATOS_ACTUALES
+          bash deploy/restore_encrypted.sh "$FILE" .env.dr-test
+          VALUE="$(docker compose --env-file .env.dr-test -f docker-compose.prod.yml exec -T db sh -ec \
+            'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT marker FROM dr_lab"')"
+          [[ "$VALUE" == 42 ]]
+          printf '{"scenario":"fictitious isolated docker postgres","restored_marker":42,"real_business_data":false,"production_restore":false}\n' > e2e/dr-v9/RESULTADO_DRILL.json
+          cp "$FILE.sha256" e2e/dr-v9/CHECKSUM_CIFRADO.sha256
+      - name: Stop and destroy ephemeral lab containers and keys
+        if: always()
+        run: |
+          docker compose --env-file .env.dr-test -f docker-compose.prod.yml down -v || true
+          rm -f /tmp/paladar_age_test_identity .env.dr-test
+      - name: Upload anonymized restoration proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paladar-v9-drill-backup-cifrado-laboratorio
+          path: e2e/dr-v9/**
