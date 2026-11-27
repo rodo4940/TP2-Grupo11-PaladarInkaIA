@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     cors_origins: str = Field(default='http://localhost:5173', alias='CORS_ORIGINS')
     jwt_secret: str = Field(default='dev-only-replace-with-32-characters-secret', alias='JWT_SECRET')
     token_ttl_minutes: int = Field(default=480, ge=5, le=1440, alias='TOKEN_TTL_MINUTES')
+    login_max_attempts: int = Field(default=5, ge=3, le=20, alias='LOGIN_MAX_ATTEMPTS')
+    login_lockout_minutes: int = Field(default=15, ge=1, le=120, alias='LOGIN_LOCKOUT_MINUTES')
     ai_api_key: str | None = Field(default=None, alias='AI_API_KEY')
     ai_model: str | None = Field(default=None, alias='AI_MODEL')
 

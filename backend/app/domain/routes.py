@@ -35,9 +35,31 @@ def not_found(what: str) -> HTTPException:
 
 @router.post('/auth/token', response_model=TokenOut)
 def login(payload: LoginIn, db: Session=Depends(get_db)) -> dict[str, Any]:
-    user = db.scalar(select(User).where(User.username==payload.username.strip().lower()))
-    if user is None or not user.active or not verify_password(payload.password, user.password_hash):
+    from app.core.config import get_settings
+    user = db.scalar(select(User).where(User.username==payload.username.strip().lower()).with_for_update())
+    if user is None or not user.active:
         raise HTTPException(401, 'Usuario o contraseña incorrectos')
+    settings = get_settings()
+    now = datetime.now(timezone.utc)
+    locked = user.login_locked_until
+    if locked and (locked if locked.tzinfo else locked.replace(tzinfo=timezone.utc)) > now:
+        retry = int(((locked if locked.tzinfo else locked.replace(tzinfo=timezone.utc)) - now).total_seconds()) + 1
+        raise HTTPException(429, 'Cuenta bloqueada temporalmente; consulta con administración',
+                            headers={'Retry-After': str(retry)})
+    if not verify_password(payload.password, user.password_hash):
+        user.failed_login_attempts += 1
+        if user.failed_login_attempts >= settings.login_max_attempts:
+            user.failed_login_attempts = 0
+            user.login_locked_until = now + timedelta(minutes=settings.login_lockout_minutes)
+            db.commit()
+            raise HTTPException(429, 'Cuenta bloqueada temporalmente; consulta con administración',
+                                headers={'Retry-After': str(settings.login_lockout_minutes * 60)})
+        db.commit()
+        raise HTTPException(401, 'Usuario o contraseña incorrectos')
+    if user.failed_login_attempts or user.login_locked_until:
+        user.failed_login_attempts = 0
+        user.login_locked_until = None
+        db.commit()
     return {'access_token':issue_token(user), 'token_type':'bearer', 'user':UserOut.model_validate(user)}
 
 @router.get('/auth/me', response_model=UserOut)
@@ -54,6 +76,7 @@ def change_password(payload:PasswordChange,db:Session=Depends(get_db),user:User=
     if payload.current_password==payload.new_password:
         raise HTTPException(422,'La contraseña nueva debe ser diferente')
     item.password_hash=hash_password(payload.new_password)
+    item.failed_login_attempts=0;item.login_locked_until=None
     item.token_version+=1
     log_action(db,item,'user.password.change','user',item.id,'Sesiones anteriores invalidadas')
     db.commit()
@@ -354,6 +377,7 @@ def reset_user_password(user_id:int,payload:PasswordReset,db:Session=Depends(get
     if item.id==actor.id:
         raise HTTPException(409,'Para cambiar tu contraseña usa /auth/change-password')
     item.password_hash=hash_password(payload.new_password)
+    item.failed_login_attempts=0;item.login_locked_until=None
     item.token_version+=1
     log_action(db,actor,'user.password.reset','user',item.id,'Sesiones anteriores invalidadas')
     db.commit()

@@ -35,3 +35,7 @@ La revisión incluye PATCH/POST de cambio y restablecimiento de contraseña con 
 - [ ] Las operaciones de caja y las pruebas técnicas NO representan cierre contable, autorización comercial ni conformidad del establecimiento.
 
 **GO / NO GO: NO GO comercial.** La versión 8 es candidata a revisión técnica y piloto autorizado, no certificación ni emisión SUNAT.
+
+### Control de acceso adicional implementado en v8
+- Bloqueo temporal persistente por cuenta tras varios intentos fallidos; configuración en entorno mediante `LOGIN_MAX_ATTEMPTS` y `LOGIN_LOCKOUT_MINUTES`. El administrador desbloquea mediante restablecimiento seguro de contraseña.
+- No sustituye rate limiting por origen, MFA, WAF ni revisión de seguridad externa. Puede ser usado indebidamente para bloquear cuentas conocidas; documentar atención al bloqueo.
