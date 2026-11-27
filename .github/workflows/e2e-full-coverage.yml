@@ -81,7 +81,7 @@ jobs:
               for attempt in range(45):
                   try:
                       with urllib.request.urlopen(url,timeout=3) as response:
-                          if response.status==240:break
+                          if response.status==200:break
                   except Exception:pass
                   time.sleep(1)
               else: raise RuntimeError('No responde '+url)
