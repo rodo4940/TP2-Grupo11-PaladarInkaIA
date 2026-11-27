@@ -32,6 +32,9 @@ services:
       TOKEN_TTL_MINUTES: ${TOKEN_TTL_MINUTES:-60}
       CORS_ORIGINS: https://${PALADAR_DOMAIN:?Set PALADAR_DOMAIN}
       API_V1_PREFIX: /api/v1
+      # Opcional: sin ambos valores, el asistente usa reglas locales.
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
     expose: ["8000"]
     depends_on:
       db: {condition: service_healthy}
