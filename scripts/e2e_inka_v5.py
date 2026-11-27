@@ -155,7 +155,7 @@ with sync_playwright() as playwright:
         }""",timeout=35000)
         snap(page,slug+'_catalogo_pos','Tarjetas fotográficas de venta, categorías, carrito y totales de servidor')
 
-        navigate(page,'Caja y comprobantes','Caja y comprobantes')
+        navigate(page,'Finanzas / Caja','Caja y comprobantes')
         expect(page.get_by_text('Constancias internas — no son boletas ni facturas electrónicas.')).to_be_visible()
         expect(page.get_by_role('heading',name='Historial de pagos')).to_be_visible()
         expect(page.locator('.billing-entry').first).to_be_visible()
