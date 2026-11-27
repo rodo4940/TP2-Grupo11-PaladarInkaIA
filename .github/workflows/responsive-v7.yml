@@ -5,6 +5,7 @@ on:
     paths:
       - "frontend/src/**"
       - "scripts/e2e_adaptive_v7.py"
+      - "scripts/e2e_finance_v8.py"
       - ".github/workflows/responsive-v7.yml"
   pull_request:
     branches: [release/paladar-inka-v1-piloto]
@@ -100,6 +101,8 @@ jobs:
           assert all(not x['metrics']['overflow'] for x in d['captures'])
           print('RESPONSIVE VERIFIED:',d['count'],'PNG',len(d['widths']),'viewports')
           PY
+      - name: Capture 16 additional audited cash/refund UI states (v8)
+        run: python scripts/e2e_finance_v8.py
       - name: Archive evidence, manifest and logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,5 +111,6 @@ jobs:
           if-no-files-found: warn
           path: |
             e2e/adaptive-v7/**
+            e2e/finance-v8/**
             backend-responsive-v7.log
             frontend-responsive-v7.log

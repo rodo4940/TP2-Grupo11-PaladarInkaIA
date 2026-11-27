@@ -38,3 +38,14 @@ No se ejecutaron por este pipeline: pruebas OWASP ZAP reales, pruebas de carga J
 ## Seguridad/ética
 
 No usar DNI, teléfonos ni ventas reales de la pizzería sin autorización. Los registros de la semilla `app.seed` son ficticios. No insertar contraseñas reales ni tokens en Git.
+
+## v8 — trazabilidad adicional, NO sustituye UAT
+| Requisito | Implementación | Validación técnica |
+|---|---|---|
+| RF-14 Solicitar devolución | `POST /billing/refunds` | Pago existente, motivo, rol, unicidad |
+| RF-15 Confirmar devolución | `POST /billing/refunds/{id}/confirm` | Admin distinto, referencia externa y segundo intento 409 |
+| RF-16 Cuadrar arqueo | `POST /billing/closeouts` | Zona Perú, fondo inicial, conteo y diferencia persistente |
+| RF-17 Aprobar arqueo | `POST /billing/closeouts/{id}/approve` | Admin independiente, registro auditado y bloqueo por datos obsoletos |
+| RF-18 Analítica neta | Dashboard, reportes, asistente y heurística | Pagos originales y devoluciones separados; no incluir devoluciones confirmadas en unidades vendidas |
+
+Suite: `backend/tests/test_reconciliation.py`. Ejecutar en el commit final del PR y verificar resultados reales del workflow. Todos los resultados empresariales de `docs/UAT_PILOTO_V8.md` permanecen SIN EJECUTAR hasta que el negocio participe.

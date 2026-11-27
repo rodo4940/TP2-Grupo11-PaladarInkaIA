@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {api} from '../services/api';
-import type {DailyCashSummary} from '../types/domain';
+import type {DailyCashSummary,Role} from '../types/domain';
+import {RegisteredCloseout} from './RegisteredCloseout';
 
 const amount=(c:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(c/100);
 const todayInPeru=()=>{
@@ -10,7 +11,7 @@ const todayInPeru=()=>{
 };
 const names:Record<string,string>={cash:'Efectivo',card:'Tarjeta',yape:'Yape',plin:'Plin'};
 
-export function CashCloseout({token}:{token:string}){
+export function CashCloseout({token,role,userId}:{token:string;role:Role;userId:number}){
  const [day,setDay]=useState(todayInPeru);
  const [summary,setSummary]=useState<DailyCashSummary|null>(null);
  const [error,setError]=useState('');
@@ -31,7 +32,8 @@ export function CashCloseout({token}:{token:string}){
    const cents=Math.round(Number(cleaned)*100);
    return Number.isSafeInteger(cents)?cents:null;
  },[physicalCash]);
- const variance=summary&&cashValue!==null?cashValue-summary.by_method.cash.amount_cents:null;
+ const netCashExpected=summary?summary.by_method.cash.amount_cents-summary.refunds_by_method.cash:0;
+ const variance=summary&&cashValue!==null?cashValue-netCashExpected:null;
 
  const exportCsv=()=>{
    if(!summary)return;
@@ -46,7 +48,9 @@ export function CashCloseout({token}:{token:string}){
       names[method],summary.by_method[method].count,
       (summary.by_method[method].amount_cents/100).toFixed(2)
     ]),
-    ['TOTAL',summary.payments_count,(summary.gross_payments_cents/100).toFixed(2)],
+    ['TOTAL BRUTO',summary.payments_count,(summary.gross_payments_cents/100).toFixed(2)],
+    ['DEVOLUCIONES CONFIRMADAS',summary.refunds_count,(summary.confirmed_refunds_cents/100).toFixed(2)],
+    ['FLUJO NETO', '',(summary.net_cash_flow_cents/100).toFixed(2)],
     [],
     ['Constancia interna','Pedido','Medio','Importe PEN'],
     ...summary.entries.map(item=>[
@@ -76,12 +80,13 @@ export function CashCloseout({token}:{token:string}){
       </article>)}
      </div>
      <div className="cash-closeout-bottom">
-      <div className="cash-closeout-total"><span>Ingreso confirmado del día</span><strong>{amount(summary.gross_payments_cents)}</strong><small>{summary.payments_count} pago(s) · America/Lima · Importes íntegros, sin descuentos ni devoluciones</small></div>
+      <div className="cash-closeout-total"><span>Pagos brutos del día</span><strong>{amount(summary.gross_payments_cents)}</strong><small>{summary.payments_count} pago(s) · America/Lima</small><small>Devoluciones confirmadas hoy: {amount(summary.confirmed_refunds_cents)} · Flujo neto: {amount(summary.net_cash_flow_cents)}</small></div>
       <div className="cash-physical-count"><label htmlFor="cash-physical-input">Efectivo contado en caja (S/)</label><input id="cash-physical-input" inputMode="decimal" placeholder="Ej.: 125.50" value={physicalCash} onChange={e=>setPhysicalCash(e.target.value)} aria-describedby="cash-variance-note"/>
-        <div className="cash-variance" id="cash-variance-note">{variance===null?'Ingresa el efectivo contado para comparar.':<><span>Diferencia respecto al efectivo registrado</span><strong className={variance===0?'cash-balanced':variance>0?'cash-surplus':'cash-deficit'}>{variance>0?'+':''}{amount(variance)}</strong></>}</div>
+        <div className="cash-variance" id="cash-variance-note">{variance===null?'Ingresa el efectivo contado para comparar.':<><span>Diferencia respecto al efectivo neto (sin fondo inicial)</span><strong className={variance===0?'cash-balanced':variance>0?'cash-surplus':'cash-deficit'}>{variance>0?'+':''}{amount(variance)}</strong></>}</div>
       </div>
      </div>
-     <p className="cash-closeout-legal"><strong>Sin cierre registrado:</strong> este es un reporte informativo y una comparación local, no un arqueo firmado. La cantidad contada no se guarda ni modifica transacciones. Revisar vouchers, efectivo, faltantes y devoluciones pendientes antes de aprobar el cierre con la persona responsable. No es comprobante tributario.</p>
+     <p className="cash-closeout-legal"><strong>Resumen informativo:</strong> la cantidad contada en este campo no se guarda hasta que envíes el arqueo registrado. La aprobación interna requiere otra persona responsable. Revisar vouchers, efectivo, faltantes y devoluciones pendientes antes de aprobar el cierre con la persona responsable. No es comprobante tributario.</p>
    </div>}
+   {summary&&<RegisteredCloseout token={token} day={day} role={role} userId={userId} countedCashCents={cashValue}/>}
  </section>;
 }

@@ -1,9 +1,10 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import type {RefObject} from 'react';
-import type {BillingDocument,BillingLedger} from '../types/domain';
+import type {BillingDocument,BillingLedger,Role} from '../types/domain';
 import {api} from '../services/api';
 import {InkaBrand} from './InkaBrand';
 import {CashCloseout} from './CashCloseout';
+import {RefundCenter} from './RefundCenter';
 
 const money=(v:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(v/100);
 const date=(v:string)=>new Date(v).toLocaleString('es-PE',{timeZone:'America/Lima',dateStyle:'medium',timeStyle:'short'});
@@ -13,7 +14,7 @@ const methodName:Record<string,string>={cash:'Efectivo',yape:'Yape',plin:'Plin',
  * Módulo de consulta y reimpresión. Fuente única: pagos persistidos en FastAPI.
  * No emite documentos tributarios. El número interno deriva de Payment.id.
  */
-export function BillingCenter({token}:{token:string}){
+export function BillingCenter({token,role,userId}:{token:string;role:Role;userId:number}){
  const [ledger,setLedger]=useState<BillingLedger|null>(null);
  const [selectedId,setSelectedId]=useState<number|null>(null);
  const [search,setSearch]=useState('');
@@ -48,10 +49,11 @@ export function BillingCenter({token}:{token:string}){
    {error&&<div role="alert" className="notice error billing-error">{error}<button type="button" className="secondary" onClick={()=>void refresh()}>Reintentar</button></div>}
    <div className="billing-metrics">
      <article><span>Pagos confirmados</span><strong>{ledger?.count??'—'}</strong><small>Registros persistidos</small></article>
-     <article><span>Ingreso registrado</span><strong>{ledger?money(ledger.total_cents):'—'}</strong><small>Total acumulado de pagos</small></article>
+     <article><span>Ingreso neto registrado</span><strong>{ledger?money(ledger.net_registered_cents):'—'}</strong><small>Pagos brutos menos devoluciones confirmadas</small></article>
      <article><span>Importe filtrado</span><strong>{money(totalFiltered)}</strong><small>{filtered.length} documentos visibles</small></article>
    </div>
-   <CashCloseout token={token}/>
+   <CashCloseout token={token} role={role} userId={userId}/>
+   <RefundCenter token={token} role={role} userId={userId} entries={entries} onChanged={()=>void refresh()}/>
    <div className="billing-columns">
      <section className="panel billing-list">
        <div className="panel-head"><div><h3>Historial de pagos</h3><p>Una constancia por pago registrado; sin duplicar cobros</p></div><button className="secondary" type="button" disabled={loading} onClick={()=>void refresh()}>{loading?'Consultando…':'Actualizar'}</button></div>
@@ -66,7 +68,7 @@ export function BillingCenter({token}:{token:string}){
        <div className="billing-entries">
         {filtered.map(item=><button type="button" key={item.id} className={`billing-entry ${selectedId===item.id?'billing-entry-active':''}`} aria-pressed={selectedId===item.id} onClick={()=>setSelectedId(item.id)}>
           <span className="billing-entry-icon" aria-hidden="true">▤</span><span className="billing-entry-body"><strong>{item.document_number}</strong><small>Pedido #{item.order_id} · {date(item.issued_at)}</small><small>{item.customer_name} · {methodName[item.method]||item.method}</small></span>
-          <span className="billing-entry-total">{money(item.total_cents)}<small>Registrado</small></span>
+          <span className="billing-entry-total">{money(item.total_cents)}<small>{item.refund_status==='confirmed'?'Devuelto · confirmado manual':item.refund_status==='pending'?'Devolución solicitada':'Registrado'}</small></span>
         </button>)}
        </div>
        <p className="billing-legal-hint">Registro administrativo: consultar o imprimir no altera el importe del pago ni el inventario.</p>
@@ -88,7 +90,8 @@ function Ticket({document,ticketRef}:{document:BillingDocument;ticketRef:RefObje
    {document.items.map((item,i)=><tr key={i}><td>{item.name}<small>{money(item.unit_price_cents)} c/u</small></td><td>{item.quantity}</td><td>{money(item.subtotal_cents)}</td></tr>)}
   </tbody></table>
   <div className="ticket-payment"><span>Medio de pago</span><strong>{methodName[document.method]||document.method}</strong></div>
-  <div className="ticket-grand-total"><span>TOTAL PAGADO</span><strong>{money(document.total_cents)}</strong></div>
+  <div className="ticket-grand-total"><span>TOTAL PAGADO ORIGINAL</span><strong>{money(document.total_cents)}</strong></div>
+  {document.refund_status&&<p className="billing-disclaimer"><strong>{document.refund_status==='confirmed'?'Devolución registrada y confirmada manualmente':'Devolución solicitada, todavía no confirmada'}.</strong> El ticket conserva el pago original y no acredita movimiento bancario.</p>}
   <div className="ticket-end-note"><span>Gracias por tu visita</span><p>Documento de uso interno. No constituye comprobante tributario SUNAT; no es boleta ni factura electrónica.</p><small>Identificación interna {document.document_number} · Estado: pago registrado</small></div>
  </div>
 }

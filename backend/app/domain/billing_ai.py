@@ -19,7 +19,8 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.domain.auth import require_roles
-from app.domain.models import Ingredient, Order, Payment, Product, User
+from app.domain.models import Ingredient, Order, Payment, Product, User, Refund, CashCloseout
+from app.domain.reconciliation import daily_totals
 
 router = APIRouter()
 cashier = require_roles('admin', 'cashier')
@@ -48,6 +49,8 @@ def billing_row(payment: Payment) -> dict:
         'issued_at': as_lima(payment.created_at).isoformat(),
         'method': payment.method,
         'total_cents': payment.amount_cents,
+        'refund_status': payment.refund.status if payment.refund else None,
+        'net_cents': 0 if payment.refund and payment.refund.status == 'confirmed' else payment.amount_cents,
         'customer_name': order.customer.name if order.customer else 'Consumidor final',
         'table_label': order.table_label,
         'order_status': order.status,
@@ -73,8 +76,11 @@ def ledger(
     paid = list(db.scalars(select(Payment).order_by(Payment.id.desc()).limit(limit)))
     total = int(db.scalar(select(func.coalesce(func.sum(Payment.amount_cents), 0))) or 0)
     count = int(db.scalar(select(func.count(Payment.id))) or 0)
+    refunded = int(sum(r.payment.amount_cents for r in db.scalars(select(Refund).where(Refund.status == 'confirmed'))))
     return {
         'entries': [billing_row(p) for p in paid],
+        'confirmed_refunds_cents': refunded,
+        'net_registered_cents': total - refunded,
         'count': count,
         'total_cents': total,
         'currency': 'PEN',
@@ -111,8 +117,15 @@ def daily_summary(
     for payment in payments:
         totals[payment.method]['count'] += 1
         totals[payment.method]['amount_cents'] += payment.amount_cents
+    movements = daily_totals(db, target)
+    closure = db.scalar(select(CashCloseout).where(CashCloseout.day == target.isoformat()))
     return {
         'date': target.isoformat(),
+        'confirmed_refunds_cents': movements['confirmed_refunds_cents'],
+        'net_cash_flow_cents': movements['net_cash_flow_cents'],
+        'refunds_count': movements['refunds_count'],
+        'refunds_by_method': movements['refunds_by_method'],
+        'internal_closeout_state': closure.state if closure else None,
         'timezone': 'America/Lima',
         'currency': 'PEN',
         'payments_count': len(payments),
@@ -145,7 +158,8 @@ class AskIn(BaseModel):
 def insights_snapshot(db: Session) -> dict:
     today = datetime.now(LIMA).date()
     previous = today - timedelta(days=1)
-    paid = list(db.scalars(select(Payment).order_by(Payment.id.desc())))
+    paid = [p for p in db.scalars(select(Payment).order_by(Payment.id.desc()))
+            if not (p.refund and p.refund.status == 'confirmed')]
     active_orders = list(db.scalars(select(Order).where(Order.status.in_(['pending', 'preparing', 'ready']))))
     products = list(db.scalars(select(Product).where(Product.active.is_(True))))
     low_stock = list(db.scalars(select(Ingredient).where(Ingredient.stock <= Ingredient.minimum_stock)))
@@ -158,8 +172,8 @@ def insights_snapshot(db: Session) -> dict:
         for item in p.order.items:
             sold[item.product_name] += item.quantity
     return {
-        'today_sales_cents': day_totals[today],
-        'previous_day_sales_cents': day_totals[previous],
+        'today_sales_cents': daily_totals(db, today)['net_cash_flow_cents'],
+        'previous_day_sales_cents': daily_totals(db, previous)['net_cash_flow_cents'],
         'sample_paid_orders': len(paid),
         'active_orders': len(active_orders),
         'pending_kitchen': sum(x.status == 'pending' for x in active_orders),

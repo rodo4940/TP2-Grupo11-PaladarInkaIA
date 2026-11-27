@@ -6,3 +6,6 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(business_router)
 api_router.include_router(billing_ai_router)
+
+from app.domain.reconciliation import router as reconciliation_router
+api_router.include_router(reconciliation_router)
