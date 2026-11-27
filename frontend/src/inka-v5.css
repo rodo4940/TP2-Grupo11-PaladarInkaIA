@@ -251,3 +251,18 @@ body{background:#f5f4ee}
  .billing-entry,.copilot-suggestions button{transition:none}
  .welcome-banner .quick-actions button:hover{transform:none}
 }
+
+/* Contraste WCAG 2.1 AA: corrección basada en hallazgos reales de axe-core.
+   El texto auxiliar debe mantener >=4.5:1 incluso en pantallas pequeñas. */
+.billing-metrics article>small,
+.billing-legal-hint,
+.billing-entry-body small,
+.billing-entry-total small,
+.billing-ticket .ticket-end-note small{color:#4f6553}
+.copilot-context-heading p,
+.copilot-stat small,
+.copilot-products p,
+.copilot-context-note,
+.copilot-legal,
+.copilot-answer small,
+.copilot-products>div{color:#506653}
