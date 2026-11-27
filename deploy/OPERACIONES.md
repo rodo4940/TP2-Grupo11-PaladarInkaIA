@@ -29,3 +29,5 @@
 - Los tickets internos NO son comprobantes de pago SUNAT. La activación de facturación electrónica requiere integración formal autorizada o proveedor OSE/PSE y validación tributaria aplicable.
 - Los números de fidelización son referenciales; no hay contrato ni programa activo de canjes.
 - La analítica usa estadísticas, no un modelo de IA entrenado, y no debe publicitarse como tal.
+## Asistente empresarial
+Por defecto `AI_API_KEY` y `AI_MODEL` están vacíos: la experiencia sigue operativa mediante reglas locales verificables. Para usar un proveedor externo, el responsable configura ambos valores en el entorno privado de despliegue (no en React, GitHub ni el navegador). Solo se envían indicadores agregados y preguntas operativas estandarizadas; deben revisarse condiciones de tratamiento, costo y disponibilidad del proveedor. El contenedor de producción recibe esos valores a través de Compose; para un entorno real se recomienda un almacén de secretos gestionado en lugar de ficheros sin cifrar.
