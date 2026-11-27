@@ -18,6 +18,8 @@ export function RegisteredCloseout({token,day,role,userId,countedCashCents}:{
  const [opening,setOpening]=useState('0');
  const [note,setNote]=useState('');
  const [approvalNote,setApprovalNote]=useState('');
+ const [finalNote,setFinalNote]=useState('');
+ const [integrity,setIntegrity]=useState('');
  const [error,setError]=useState('');
  const [message,setMessage]=useState('');
  const [busy,setBusy]=useState(false);
@@ -38,6 +40,21 @@ export function RegisteredCloseout({token,day,role,userId,countedCashCents}:{
    setMessage('Arqueo registrado. Falta revisión por otra persona administradora.');
   }catch(e){setError(e instanceof Error?e.message:'No se pudo registrar el arqueo')}
   finally{setBusy(false)}
+ };
+ const finalize=async()=>{
+  if(!record||finalNote.trim().length<12){setError('Registra una justificación de al menos 12 caracteres.');return;}
+  setBusy(true);setError('');setMessage('');
+  try {
+    setRecord(await post<RegisteredCashCloseout>(`/billing/closeouts/${record.id}/finalize`,{final_note:finalNote.trim()},token));
+    setMessage('Cierre interno final guardado; no es una declaración SUNAT.');
+  } catch(e) {setError(e instanceof Error?e.message:'Error al finalizar caja')}
+  finally {setBusy(false)}
+ };
+ const verify=async()=>{
+  try{
+    const result=await api<{hash_valid:boolean;movements_unchanged:boolean}>(`/billing/closeouts/${day}/integrity`,token);
+    setIntegrity(result.hash_valid&&result.movements_unchanged?'SHA-256 e importes coinciden':'Diferencias detectadas');
+  }catch(e){setIntegrity(e instanceof Error?e.message:'No se pudo verificar')}
  };
  const approve=async()=>{
   if(!record||approvalNote.trim().length<8){setError('Escribe una nota de verificación (mínimo 8 caracteres).');return}
@@ -65,12 +82,19 @@ export function RegisteredCloseout({token,day,role,userId,countedCashCents}:{
       onClick={()=>void save()}>Registrar arqueo del día</button>
     </div>:
     <div>
-     <p><strong>{record.state==='approved'?'Aprobado internamente':'Pendiente de aprobación'}</strong>
+     <p><strong>{record.state==='finalized'?'Finalizado (cierre interno)':record.state==='approved'?'Aprobado internamente':'Pendiente de aprobación'}</strong>
       {record.stale?' · Datos cambiaron desde el arqueo':''}</p>
      <p>Esperado: {money(record.expected_cash_cents)} · Contado: {money(record.counted_cash_cents)}</p>
      <p>Diferencia: <strong>{money(record.variance_cents)}</strong></p>
      <p>Registrado por usuario #{record.submitted_by}
       {record.approved_by?` · Aprobado por #${record.approved_by}`:''}</p>
+     {record.state==='finalized'&&<div><small>Hash SHA-256: {record.snapshot_sha256}</small><button type="button" className="secondary" onClick={()=>void verify()}>Verificar integridad</button><p role="status">{integrity}</p></div>}
+     {role==='admin'&&record.state==='approved'&&record.submitted_by!==userId&&
+      <div className="cash-closeout-actions">
+       <label htmlFor="finalization-note">Justificación de cierre final</label>
+       <input id="finalization-note" maxLength={500} value={finalNote} onChange={e=>setFinalNote(e.target.value)} placeholder="Cuadre y comprobantes revisados"/>
+       <button type="button" className="primary" disabled={busy||record.stale} onClick={()=>void finalize()}>Finalizar cierre interno</button>
+      </div>}
      {role==='admin'&&record.state==='submitted'&&record.submitted_by!==userId&&
       <div className="cash-closeout-actions">
        <label htmlFor="cash-approval-note">Nota de revisión independiente</label>

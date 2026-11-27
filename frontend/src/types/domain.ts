@@ -52,7 +52,7 @@ export interface DailyCashSummary {
  reconciliation_note:string;fiscal_status:'NO_EMITIDO_SUNAT';
  confirmed_refunds_cents:number;net_cash_flow_cents:number;refunds_count:number;
  refunds_by_method:Record<'cash'|'card'|'yape'|'plin',number>;
- internal_closeout_state:'submitted'|'approved'|null;
+ internal_closeout_state:'submitted'|'approved'|'finalized'|null;
 }
 
 /** La confirmación de devolución es HUMANA; la API no mueve dinero. */
@@ -62,9 +62,10 @@ export interface InternalRefund {
  external_reference:string|null;created_at:string;confirmed_at:string|null;disclaimer:string;
 }
 export interface RegisteredCashCloseout {
- id:number;day:string;state:'submitted'|'approved';opening_cash_cents:number;
+ id:number;day:string;state:'submitted'|'approved'|'finalized';opening_cash_cents:number;
  expected_cash_cents:number;counted_cash_cents:number;variance_cents:number;
  gross_payments_cents:number;confirmed_refunds_cents:number;payments_count:number;
  refunds_count:number;submitted_by:number;approved_by:number|null;note:string;
  approval_note:string;created_at:string;approved_at:string|null;stale:boolean;disclaimer:string;
+ finalized_at:string|null;finalized_by:number|null;snapshot_sha256:string|null;
 }
