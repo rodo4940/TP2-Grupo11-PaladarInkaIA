@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     cors_origins: str = Field(default='http://localhost:5173', alias='CORS_ORIGINS')
     jwt_secret: str = Field(default='dev-only-replace-with-32-characters-secret', alias='JWT_SECRET')
     token_ttl_minutes: int = Field(default=480, ge=5, le=1440, alias='TOKEN_TTL_MINUTES')
+    ai_api_key: str | None = Field(default=None, alias='AI_API_KEY')
+    ai_model: str | None = Field(default=None, alias='AI_MODEL')
 
     @field_validator('debug', mode='before')
     @classmethod

@@ -1,7 +1,7 @@
 name: Extended Full-System UI Evidence
 on:
   push:
-    branches: [release/paladar-inka-v1-piloto, feature/premium-v4-design-system-200-evidencias]
+    branches: [release/paladar-inka-v1-piloto, feature/paladar-inka-v5-sistema-integral-caja-ia]
     paths:
       - "scripts/e2e_catalogo_permisos.py"
       - "scripts/e2e_browser.py"
@@ -9,6 +9,7 @@ on:
       - "scripts/e2e_premium_visual.py"
       - "scripts/e2e_responsive_matrix.py"
       - "scripts/e2e_studio_v4.py"
+      - "scripts/e2e_inka_v5.py"
       - "scripts/build_evidence_gallery.py"
       - "scripts/qa_security_smoke.py"
       - "frontend/src/**"
@@ -23,7 +24,7 @@ permissions:
 jobs:
   real-browser-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:17
@@ -91,6 +92,8 @@ jobs:
         run: python scripts/e2e_responsive_matrix.py
       - name: Capture Studio v4 across four new viewports (48 genuine PNG)
         run: python scripts/e2e_studio_v4.py
+      - name: Capture 40 additional Inka v5 login, billing, IA and responsive evidence
+        run: python scripts/e2e_inka_v5.py
       - name: Verify HTTP security controls on running backend
         run: python scripts/qa_security_smoke.py
       - name: Verify screenshot manifest
@@ -100,9 +103,13 @@ jobs:
           folder=pathlib.Path('e2e/evidencias')
           obj=json.loads((folder/'e2e-results.json').read_text())
           pics=list(folder.glob('*.png'))
-          assert len(pics)==200,(len(pics),[p.name for p in pics])
-          assert len(obj['screenshots'])==200
-          assert len({x['file'] for x in obj['screenshots']})==200
+          assert len(pics)==240,(len(pics),[p.name for p in pics])
+          assert len(obj['screenshots'])==240
+          assert len({x['file'] for x in obj['screenshots']})==240
+          inkav5=json.loads((folder/'inka-v5-results.json').read_text())
+          assert inkav5['new_screenshots']==40 and inkav5['total_screenshots']==240
+          assert not inkav5['javascript_errors']
+          assert all(not x['horizontal_overflow'] for x in inkav5['scenarios'])
           studio=json.loads((folder/'studio-v4-results.json').read_text())
           assert studio['new_screenshots']==48 and studio['total_screenshots']==200
           assert not studio['horizontal_overflows'] and not studio['runtime_errors']
@@ -116,7 +123,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: paladar-studio-v4-200-real-screens
+          name: paladar-inka-v5-240-real-screens
           path: |
             e2e/evidencias/**
             backend-full-e2e.log

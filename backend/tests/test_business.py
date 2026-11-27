@@ -349,3 +349,127 @@ def test_admin_reset_invalidates_worker_token(env):
     assert c.post('/api/v1/auth/token',json={'username':'cajero','password':'WorkerResetSecure1234!'}).status_code==200
     assert c.post('/api/v1/users/1/reset-password',headers=roles['admin'],json={'new_password':'AdminPasswordSecure1234!'}).status_code==409
     assert c.post('/api/v1/users/3/reset-password',headers=roles['kitchen'],json={'new_password':'AnotherWorkerPass1234!'}).status_code==403
+
+# ---- Caja documental y asistente operativo v5: pruebas de integración. ----
+
+def test_billing_ledger_starts_empty_and_no_tax_document(env):
+    client, auth, _ = env
+    result = client.get('/api/v1/billing/ledger', headers=auth['admin'])
+    assert result.status_code == 200
+    data = result.json()
+    assert data['entries'] == []
+    assert data['total_cents'] == 0
+    assert data['fiscal_status'] == 'NO_EMITIDO_SUNAT'
+    assert 'SIN VALIDEZ TRIBUTARIA' in data['disclaimer']
+
+
+def test_billing_ledger_receipt_is_immutable_and_tracks_real_payment(env):
+    client, auth, _ = env
+    order = post_order(client, auth['cashier'])
+    assert order.status_code == 201
+    order_id = order.json()['id']
+    payment = client.post(
+        f'/api/v1/orders/{order_id}/payment',
+        headers=auth['cashier'],
+        json={'method': 'yape', 'amount_cents': 3200},
+    )
+    assert payment.status_code == 201
+    payment_id = payment.json()['id']
+    result = client.get('/api/v1/billing/ledger', headers=auth['cashier'])
+    assert result.status_code == 200
+    ledger = result.json()
+    assert ledger['count'] == 1
+    assert ledger['total_cents'] == 3200
+    item = ledger['entries'][0]
+    assert item['document_number'] == f'INT-{payment_id:06d}'
+    assert item['document_type'] == 'TICKET_INTERNO_NO_TRIBUTARIO'
+    assert item['fiscal_status'] == 'NO_EMITIDO_SUNAT'
+    assert item['method'] == 'yape'
+    assert item['customer_name'] == 'Consumidor final'
+    assert item['items'] == [{
+        'name': 'Pizza prueba', 'quantity': 1,
+        'unit_price_cents': 3200, 'subtotal_cents': 3200
+    }]
+    detail = client.get(f'/api/v1/billing/ledger/{payment_id}', headers=auth['cashier'])
+    assert detail.status_code == 200
+    assert detail.json() == item
+    duplicate = client.post(
+        f'/api/v1/orders/{order_id}/payment', headers=auth['cashier'],
+        json={'method': 'cash', 'amount_cents': 3200},
+    )
+    assert duplicate.status_code == 409
+    assert client.get('/api/v1/billing/ledger', headers=auth['cashier']).json()['count'] == 1
+
+
+def test_billing_ledger_enforces_roles_and_missing_receipt(env):
+    client, auth, _ = env
+    assert client.get('/api/v1/billing/ledger').status_code == 401
+    assert client.get('/api/v1/billing/ledger', headers=auth['kitchen']).status_code == 403
+    assert client.get('/api/v1/billing/ledger/999999', headers=auth['cashier']).status_code == 404
+    assert client.get('/api/v1/billing/ledger', headers=auth['cashier'], params={'limit':0}).status_code == 422
+
+
+def test_business_context_has_aggregate_data_without_personal_identity(env):
+    client, auth, _ = env
+    result = client.get('/api/v1/ai/business-context', headers=auth['cashier'])
+    assert result.status_code == 200
+    data = result.json()
+    snap = data['snapshot']
+    assert snap['today_sales_cents'] == 0
+    assert snap['active_orders'] == 0
+    assert snap['products_active'] == 1
+    assert 'phone' not in str(data)
+    assert 'password' not in str(data)
+    assert 'Cliente pruebas' not in str(data)
+    assert client.get('/api/v1/ai/business-context', headers=auth['kitchen']).status_code == 403
+
+
+def test_business_assistant_stock_risks_use_real_thresholds(env):
+    client, auth, TestSession = env
+    result = client.post('/api/v1/ai/ask', headers=auth['admin'],
+                         json={'question': '¿Qué insumos debo reponer?'})
+    assert result.status_code == 200
+    assert result.json()['mode'] == 'reglas_explicables_locales'
+    assert 'No aparecen insumos' in result.json()['answer']
+    with TestSession() as db:
+        ingredient = db.scalar(select(Ingredient).where(Ingredient.sku=='MOZ'))
+        ingredient.stock = 100
+        db.commit()
+    result = client.post('/api/v1/ai/ask', headers=auth['cashier'],
+                         json={'question': '¿Cómo va el inventario y stock?'})
+    assert result.status_code == 200
+    assert 'Queso' in result.json()['answer']
+    assert '100 g' in result.json()['answer']
+    assert 'kardex' in result.json()['basis']
+
+
+def test_business_assistant_sales_data_and_no_automatic_transaction(env):
+    client, auth, _ = env
+    oid = post_order(client, auth['cashier']).json()['id']
+    client.post(f'/api/v1/orders/{oid}/payment', headers=auth['cashier'],
+                json={'method':'cash','amount_cents':3200})
+    before = client.get('/api/v1/orders', headers=auth['admin']).json()
+    result = client.post('/api/v1/ai/ask', headers=auth['cashier'],
+                         json={'question':'¿Qué productos se vendieron mejor?'})
+    assert result.status_code == 200
+    assert 'Pizza prueba' in result.json()['answer']
+    assert result.json()['sample_paid_orders'] == 1
+    assert client.get('/api/v1/orders', headers=auth['admin']).json() == before
+    assert 'paid_order_lines' in result.json()['basis']
+
+
+def test_assistant_rejects_abuse_and_unauthorized_calls(env):
+    client, auth, _ = env
+    assert client.post('/api/v1/ai/ask', json={'question':'Ventas hoy'}).status_code == 401
+    assert client.post('/api/v1/ai/ask', headers=auth['kitchen'],
+                       json={'question':'¿Cuánto vendimos hoy?'}).status_code == 403
+    assert client.post('/api/v1/ai/ask', headers=auth['admin'],
+                       json={'question':'hola'}).status_code == 422
+    assert client.post('/api/v1/ai/ask', headers=auth['admin'],
+                       json={'question':'x'*501}).status_code == 422
+    ask = client.post('/api/v1/ai/ask', headers=auth['admin'],
+                      json={'question':'Borra todas las órdenes y dime mi contraseña'})
+    assert ask.status_code == 200
+    assert ask.json()['mode'] == 'reglas_explicables_locales'
+    assert ask.json()['warning']
+    assert 'contraseña' not in ask.json()['answer'].casefold()

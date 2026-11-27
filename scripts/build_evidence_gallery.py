@@ -15,7 +15,7 @@ import struct
 ROOT=Path('e2e/evidencias')
 obj=json.loads((ROOT/'e2e-results.json').read_text(encoding='utf-8'))
 screens=obj['screenshots']
-assert len(screens)==200, f'El lote no contiene 200 capturas: {len(screens)}'
+assert len(screens)==240, f'El lote no contiene 240 capturas: {len(screens)}'
 seen=set()
 records=[]
 for item in screens:
@@ -35,9 +35,9 @@ for item in screens:
         'source':item.get('source', 'Chromium/Playwright sobre entorno de QA'),
     })
 records.sort(key=lambda row:row['n'])
-assert [r['n'] for r in records]==list(range(1,201)), 'No se encuentra numeración consecutiva 01-200'
+assert [r['n'] for r in records]==list(range(1,241)), 'No se encuentra numeración consecutiva 01-240'
 
-with (ROOT/'MANIFIESTO_SHA256_200.csv').open('w',newline='',encoding='utf-8-sig') as f:
+with (ROOT/'MANIFIESTO_SHA256_240.csv').open('w',newline='',encoding='utf-8-sig') as f:
     writer=csv.DictWriter(f,fieldnames=list(records[0]))
     writer.writeheader()
     writer.writerows(records)
@@ -45,14 +45,14 @@ with (ROOT/'MANIFIESTO_SHA256_200.csv').open('w',newline='',encoding='utf-8-sig'
 report={
     'proyecto':'El Paladar del Inka · Taller de Proyectos 2',
     'tipo':'Evidencias reales de Chromium/Playwright sobre sistema QA',
-    'cantidad_imagenes':200,
+    'cantidad_imagenes':240,
     'total_bytes':sum(r['bytes'] for r in records),
     'git_sha':os.getenv('GITHUB_SHA','ejecución local'),
     'generado_utc':datetime.now(timezone.utc).isoformat(),
-    'integridad':'200 PNG únicos, cabecera válida, resolución mínima y SHA256 por archivo',
+    'integridad':'240 nombres de PNG distintos, cabecera válida, resolución mínima y SHA256 por archivo; las imágenes pueden repetirse visualmente',
     'limites':'Datos ficticios; no constituye UAT empresarial ni autorización de producción',
 }
-(ROOT/'REPORTE_EVIDENCIAS_200.json').write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding='utf-8')
+(ROOT/'REPORTE_EVIDENCIAS_240.json').write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding='utf-8')
 
 cards=[]
 for r in records:
@@ -66,7 +66,7 @@ for r in records:
        +'<p><a href="'+file+'" target="_blank" rel="noopener noreferrer">Abrir captura original ↗</a></p></div></article>')
 html='''<!doctype html><html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>200 evidencias originales · Paladar Inka</title>
+<title>240 evidencias originales · Paladar Inka</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#20352b;background:#f7f5ef}
 *{box-sizing:border-box}
@@ -89,10 +89,10 @@ small{color:#66766b}
 code{color:#efd499}
 footer{padding:30px 20px;background:#f0eee5;text-align:center;color:#59675d;font-size:12px}
 </style></head><body>
-<header><b>PALADAR INKA · QA AUDITABLE</b><h1>200 capturas originales del sistema</h1>
-<p>Estas capturas se generaron mediante <strong>Chromium/Playwright</strong> sobre React, FastAPI y PostgreSQL con datos de laboratorio. Incluyen login, ventas, clientes, cocina, inventario, seguridad, diseños responsive y pruebas de interfaz. Consulta MANIFIESTO_SHA256_200.csv para verificar los archivos. <b>No acreditan aceptación de usuarios ni puesta en producción.</b></p>
+<header><b>PALADAR INKA · QA AUDITABLE</b><h1>240 capturas originales del sistema</h1>
+<p>Estas capturas se generaron mediante <strong>Chromium/Playwright</strong> sobre React, FastAPI y PostgreSQL con datos de laboratorio. Incluyen login, ventas, clientes, cocina, inventario, seguridad, diseños responsive y pruebas de interfaz. Consulta MANIFIESTO_SHA256_240.csv para verificar los archivos. <b>No acreditan aceptación de usuarios ni puesta en producción.</b></p>
 <p>Commit CI: <code>'''+escape(report['git_sha'])+'''</code></p></header>
-<main><div class="toolbar"><strong id="count">200 evidencias</strong><input id="query" type="search" aria-label="Buscar evidencias" placeholder="Buscar por pantalla, prueba o número..."/></div>
+<main><div class="toolbar"><strong id="count">240 evidencias</strong><input id="query" type="search" aria-label="Buscar evidencias" placeholder="Buscar por pantalla, prueba o número..."/></div>
 <section class="grid" id="grid">'''+''.join(cards)+'''</section></main>
 <footer>Universidad Continental · Taller de Proyectos 2 · Galería generada desde archivos originales con SHA256</footer>
 <script>
@@ -104,5 +104,5 @@ q.addEventListener('input',()=>{
  document.getElementById('count').textContent=count+' evidencias';
 });
 </script></body></html>'''
-(ROOT/'GALERIA_200.html').write_text(html,encoding='utf-8')
-print('GALERIA_200.html creada; 200 hashes SHA256 y archivos validados')
+(ROOT/'GALERIA_240.html').write_text(html,encoding='utf-8')
+print('GALERIA_240.html creada; 240 hashes SHA256 y archivos validados')
