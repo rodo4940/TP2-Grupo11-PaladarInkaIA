@@ -65,3 +65,11 @@ Los indicadores de calidad deben consultarse en el **workflow del commit exacto*
 | UAT | Casos reales ejecutados y conformidad del establecimiento firmada |
 
 **Decisión de esta versión:** técnicamente candidata a piloto; **NO GO comercial** hasta que la pizzería valide y firme la lista de control, y se resuelvan los bloqueos de seguridad/tributación. Este dictamen no puede sustituirse por capturas ni por un informe académico.
+
+
+### Apéndice v8 — registro y aprobación de arqueo interno
+El resumen de caja sigue siendo un reporte informativo. Ahora puede registrarse un arqueo administrativo mediante `/billing/closeouts`, con **fondo inicial**, dinero contado, diferencia y snapshot de ingresos y devoluciones confirmadas por día local de Perú. El aprobador debe ser otro usuario administrador y debe revisar físicamente documentos antes de aprobar. Si hay cobros/devoluciones nuevos, el snapshot queda desactualizado: no se puede aprobar sin una revisión correctiva manual (la edición/reapertura del arqueo será una función posterior).
+
+Los pagos originales siguen inmutables. La solicitud de reembolso se registra en `/billing/refunds` y un administrador distinto puede dejar constancia de **verificación humana** con referencia del reintegro. El software **NO** devuelve dinero por banca/Yape/Plin/tarjeta, no restituye stock automáticamente, no crea nota de crédito SUNAT ni reemplaza la conciliación real.
+
+La suma neta general es ingresos brutos menos devoluciones confirmadas. Para el flujo de caja diario, una devolución se contabiliza en el día local de **confirmación**, no en el día del cobro original. Un arqueo aprobado es administrativo, NO cierre fiscal/bancario.

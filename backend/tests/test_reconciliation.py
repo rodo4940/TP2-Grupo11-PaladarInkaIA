@@ -46,6 +46,15 @@ def test_manual_refund_requires_two_people_and_keeps_payment_history(env):
     assert ledger['net_registered_cents'] == 0
     assert ledger['entries'][0]['refund_status'] == 'confirmed'
     assert ledger['entries'][0]['net_cents'] == 0
+    report = client.get('/api/v1/reports/sales', headers=auth['cashier']).json()
+    assert report['gross_payments_cents'] == 3200
+    assert report['confirmed_refunds_cents'] == 3200
+    assert report['sales_cents'] == 0
+    assert report['paid_orders'] == 0
+    dashboard = client.get('/api/v1/dashboard', headers=auth['cashier']).json()
+    assert dashboard['sales_cents'] == 0
+    forecast = client.get('/api/v1/ai/demand-forecast', headers=auth['cashier']).json()
+    assert forecast['sample_paid_orders_7d'] == 0
     assert client.get('/api/v1/orders', headers=auth['admin']).json()[0]['paid'] is True
     with session() as db:
         from sqlalchemy import select
