@@ -1,102 +1,141 @@
-> **Descarga recomendada (piloto técnico verificado):** utiliza esta rama `release/paladar-inka-v1-piloto`. En Windows abre `INICIAR_WINDOWS.bat` con Docker Desktop iniciado; en Linux/macOS/WSL ejecuta `bash scripts/start.sh`. Los usuarios de demostración usan datos ficticios. La descarga de `main` todavía NO contiene esta versión mientras el PR #11 esté pendiente de aprobación.
+<p align="center">
+  <img src="frontend/public/branding/inka-mark.svg" alt="Identidad visual El Paladar del Inka" width="106" height="106">
+</p>
 
-## Studio Premium v4 · Rediseño integral validado
+# El Paladar del Inka
+### Sistema integrado de ventas, cocina, inventario y atención al cliente
 
-La versión **Studio v4** ya está integrada en esta rama mediante el [PR #15](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/15). Mejora la experiencia visual de **todos los módulos**: encabezados con ilustraciones SVG originales por área, tarjetas, formularios, tablas y botones consistentes, navegación inferior móvil consciente de roles, indicadores de conexión y recuperaciones de error. Las fotografías del POS siguen siendo **referenciales**, con arte local de respaldo.
+**Universidad Continental · Taller de Proyectos 2 · Ingeniería de Sistemas e Informática · 2026**
 
-**Calidad verificada sobre el commit del PR:** [GitHub Actions · 200 capturas reales](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374212) · [Fullstack React y backend](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374023) · [Seguridad/accesibilidad](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374113) · [Instalación limpia Docker](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45900374123).
+> **Estado del entregable:** versión de laboratorio funcional, instalada y verificada mediante CI y navegador real. Puede ejecutarse con Docker para demostraciones. **No constituye por sí misma una autorización para operar comercialmente ni para emitir comprobantes SUNAT.**
 
-- **200 PNG originales**, desde login hasta módulos y estados responsive, con galería `GALERIA_200.html`, `MANIFIESTO_SHA256_200.csv` y métricas de navegador.
-- **51 pruebas de backend**, **27/27 controles HTTP**, cero errores JavaScript detectados y comprobación del ancho real de los PNG a 320, 414, 820 y 1366 píxeles.
-- Se corrigió un overflow real del formulario de Inventario en teléfonos angostos. Las tablas de muchas columnas se desplazan **dentro de su panel**, no ensanchan la página.
-- [Decisiones de diseño, matriz de QA y límites del piloto](docs/ESTUDIO_PREMIUM_V4.md).
+[![Revisar pruebas](https://img.shields.io/badge/QA-GitHub_Actions-204f3e)](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions)
+[![Documentación](https://img.shields.io/badge/Arquitectura-Documentada-c78e4b)](docs/SISTEMA_OPERATIVO_V5.md)
+[![Estado](https://img.shields.io/badge/Entrega-Piloto_Validado-355b45)](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/tree/release/paladar-inka-v1-piloto)
 
-**Estado:** aprobado para demostración y piloto técnico en entorno controlado. Para uso comercial se necesita UAT firmada, infraestructura endurecida, datos y fotografías autorizados, backups verificados y proceso tributario correspondiente.
+La implementación utiliza **React 19 + TypeScript + Vite** en el cliente, **FastAPI + Python 3.12 + SQLAlchemy** en la API y **PostgreSQL 17** con migraciones Alembic. La interfaz incluye identidad visual original inspirada en geometrías andinas, fotografías gastronómicas de referencia, navegación adaptada a cada rol y un centro de operaciones con información del servidor.
 
-## Experiencia premium v3 — validada para piloto técnico
+## 1. Iniciar el sistema
 
-La mejora [PR #14 (fusionado)](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/14) está integrada en esta rama de entrega. Incluye centro de operaciones con datos del servidor, sincronización verificable, ayuda accesible y navegación por roles, carrito móvil, fotografías referenciales con ilustración local de respaldo y diseño responsive. La [ejecución E2E aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45897585108) generó **152 PNG auténticos**: 100 escenarios previos más 52 capturas en pantallas de 360, 390, 768 y 1440 px (login, 11 módulos y centro de ayuda), con galería, manifiesto SHA-256, 27/27 controles HTTP, cero errores JavaScript y cero desbordamientos horizontales detectados. También aprobaron Fullstack Quality, Fresh Clone Docker y Security and Accessibility QA (axe-core automatizado preliminar).
+Descarga la rama **[`release/paladar-inka-v1-piloto`](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/tree/release/paladar-inka-v1-piloto)**. Los archivos de `main` pueden seguir una revisión diferente mientras la promoción a la rama protegida esté pendiente.
 
-- [Decisiones UI/UX y matriz de 152 evidencias](docs/EXPERIENCIA_PREMIUM_V3_RESPONSIVE.md)
-- [Galería, SHA-256 y controles de pantalla del workflow](.github/workflows/e2e-full-coverage.yml)
+**Requisito local:** Docker Desktop o Docker Engine con Docker Compose v2. No es necesario instalar Python, Node.js ni PostgreSQL en el equipo anfitrión.
 
-## Antecedente: interfaz premium v2 y sus primeras 100 evidencias
+| Sistema | Instrucción |
+|---|---|
+| Windows | Inicia Docker Desktop y ejecuta `INICIAR_WINDOWS.bat` |
+| Linux, macOS o WSL | `bash scripts/start.sh` |
+| Inicio limpio | Consulta [la guía de instalación](docs/INSTALACION_LOCAL.md) y los scripts de arranque |
 
-La rama `release/paladar-inka-v1-piloto` incorpora el rediseño visual premium y responsive, fotografías **referenciales** de pizzas en POS y catálogo, login/dashboard con fotografía y la suite Playwright ampliada a **100 capturas reales de navegador**. La [ejecución E2E final aprobada](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45892814169) aporta el artefacto `paladar-full-ui-evidence` con 100 PNG, galería HTML, SHA256 y los 27 controles HTTP con cero errores. Las fotografías son ilustrativas y deben sustituirse por recursos propios aprobados antes del uso comercial.
+El iniciador genera un `.env` de desarrollo con secretos locales, levanta los contenedores, aplica migraciones y carga registros **ficticios** de demostración. No compartas ese archivo ni reutilices sus contraseñas.
 
-- [Decisiones de diseño, licencia de fotografías y matriz QA 91–100](docs/REDISENO_PREMIUM_EVIDENCIAS_100.md)
-- [Workflow que produce el ZIP de evidencias reales](.github/workflows/e2e-full-coverage.yml)
+| Recurso | Dirección local |
+|---|---|
+| Interfaz web | http://localhost:5173 |
+| Documentación interactiva de API (desarrollo) | http://localhost:8000/docs |
+| Salud del servicio | http://localhost:8000/api/v1/health |
 
-# Paladar Inka AI — gestión integral de pizzería
+Usuarios de demostración: `admin`, `cajero`, `cocina`. La contraseña de semilla se consulta en la variable `SEED_ADMIN_PASSWORD` del `.env` **local**, no se guarda en el repositorio.
 
-Sistema académico de ingeniería de software desarrollado para **El Paladar del Inka**, Taller de Proyectos 2, Universidad Continental (2026-II).
+## 2. Funcionalidades
 
-**Tecnologías:** React 19 + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 17 · SQLAlchemy y Alembic · Docker Compose · GitHub Actions.
+| Módulo | Qué se puede hacer | Quién lo usa |
+|---|---|---|
+| Panel general | Consultar ventas cobradas, pedidos, alertas, operaciones y tendencias | Todos los roles, con datos autorizados |
+| Ventas / POS | Buscar productos, armar carrito, indicar mesa/recojo/delivery, confirmar pedidos y registrar pagos | Administración y caja |
+| Caja y comprobantes | Consultar pagos confirmados, filtrar métodos, revisar y reimprimir ticket interno `INT-######` | Administración y caja |
+| Pedidos | Filtrar, consultar seguimiento, revisar estado de pago, detalle y tickets internos | Roles autorizados |
+| Cocina | Recibir comandas y mover estados: pendiente → preparando → listo → entregado | Administración y cocina |
+| Inventario / Kardex | Consultar existencias, mínimos, consumos por pedido y ajustes autorizados | Administración; consulta según rol |
+| Productos y recetas | Crear y mantener productos, precios, disponibilidad, insumos y recetas | Administración |
+| Clientes | Gestionar fichas e historial basado en pedidos registrados | Administración y caja |
+| Reportes | Consultar ingresos **cobrados**, métodos de pago, artículos vendidos y exportar CSV | Administración y caja |
+| Analítica inteligente | Consultar ranking, tendencia orientativa y asistente de preguntas sobre negocio | Administración y caja |
+| Usuarios y permisos | Administrar cuentas, roles, activación y bitácora | Administración |
+| Configuración | Consultar sesión, estado de la API y actualizar contraseña | Todos los roles |
 
-## Ejecutar después de descargar GitHub
+### Flujo de la operación
 
-No necesitas instalar Node, Python o PostgreSQL localmente. Solo **Docker Desktop/Engine + Docker Compose v2**.
-
-**En Windows:** abre Docker Desktop y haz doble clic en **`INICIAR_WINDOWS.bat`**.
-
-**En Linux, macOS o WSL:**
-```bash
-bash scripts/start.sh
+```mermaid
+flowchart LR
+  A[Venta y carrito] --> B[Validación en FastAPI]
+  B --> C[Pedido y receta]
+  C --> D[Consumo y Kardex]
+  D --> E[Comanda en cocina]
+  C --> F[Pago único]
+  F --> G[Constancia interna]
+  F --> H[Reporte y analítica]
 ```
 
-El instalador crea **`.env` con secretos locales aleatorios**, inicia PostgreSQL + API + React, aplica migraciones y crea datos de prueba sin duplicados. Luego abre:
+El frontend muestra el proceso, pero no determina el importe definitivo: **FastAPI recalcula precios, valida stock y controla las transacciones de la base de datos**. Un usuario sin autorización no obtiene permisos por manipular botones del navegador.
 
-| Acceso | URL |
+## 3. Caja, tickets y facturación
+
+La tabla de pagos se consulta mediante `GET /api/v1/billing/ledger`. Cada pago tiene una referencia interna estable `INT-######`, con fecha del Perú, productos, cantidades, precios históricos, medio de pago y total. El sistema permite imprimir o reimprimir una constancia sin volver a cobrar. Un cobro duplicado del mismo pedido se rechaza mediante la lógica de negocio del servidor.
+
+**Importante:** los tickets impresos por esta versión son **documentos internos sin validez tributaria**. No son boletas ni facturas electrónicas, no tienen CDR, no se envían a SUNAT y no deben usarse para afirmar cumplimiento fiscal.
+
+Para habilitar una emisión tributaria real el establecimiento debe proporcionar los datos y autorizaciones legales (RUC, régimen, datos de emisor/receptor, esquema de emisión, certificados y validación técnica) e integrar un emisor habilitado. Referencia: [Comprobantes de Pago Electrónicos – SUNAT](https://cpe.sunat.gob.pe/).
+
+## 4. Cómo trabaja el asistente
+
+El servidor admite consultas de análisis por lenguaje natural mediante:
+- `GET /api/v1/ai/business-context`: indicadores agregados de ventas, pedidos, insumos y productos.
+- `POST /api/v1/ai/ask`: pregunta breve; respuesta razonada, fuente de datos y advertencias.
+
+**Modo local por defecto:** `reglas_explicables_locales`. Funciona sin una clave de terceros, identifica ventas registradas, alertas de insumos, pedidos en cocina y productos vendidos, y explica la base de la respuesta. **No es un modelo generativo entrenado.**
+
+**Modo opcional con modelo externo:** el administrador puede configurar `AI_API_KEY` y `AI_MODEL` exclusivamente en el entorno de la API, nunca en el frontend. El servidor prepara indicadores agregados, no envía contraseñas, JWT, teléfonos ni nombres de clientes, solicita respuesta informativa y vuelve a las reglas locales si el proveedor falla. Requiere contar con credenciales y presupuesto del servicio elegido.
+
+**Seguridad funcional:** el asistente **solo lee datos**. No ejecuta compras, no cambia precios, no altera stock y no confirma pagos. Su cálculo de demanda es descriptivo y no debe presentarse como una predicción estadísticamente validada.
+
+## 5. Interfaz y diseño adaptativo
+
+- Isotipo original del restaurante en SVG: `frontend/src/components/InkaBrand.tsx` y `frontend/public/branding/inka-mark.svg`.
+- Fotografía gastronómica referencial de Unsplash, con ilustración local de respaldo si la conexión al CDN falla. Las imágenes no prueban que sean fotografías reales de las recetas del establecimiento.
+- Formularios, tarjetas, estados de stock, botones, tablas, filtros, indicadores y tickets con jerarquía visual coherente.
+- Navegación inferior en móvil y menú lateral para módulos secundarios. Navegación por rol y accesibilidad de teclado.
+- Diseño comprobado en 320, 360, 390, 414, 768, 820, 1280, 1366 y 1440 px en las diferentes ejecuciones. Las tablas anchas se desplazan dentro de su contenedor sin ampliar el documento raíz.
+
+La capa visual actual se implementa en `frontend/src/inka-v5.css` y sus componentes. La [arquitectura y los criterios de uso](docs/SISTEMA_OPERATIVO_V5.md) explican cada decisión relevante.
+
+## 6. Calidad, pruebas y evidencias
+
+Ejecuciones automáticas verificadas para los cambios de la versión v5:
+
+| Verificación | Resultado |
 |---|---|
-| Aplicación React | http://localhost:5173 |
-| API Swagger (solo demo) | http://localhost:8000/docs |
-| Comprobación API | http://localhost:8000/api/v1/ready |
+| Tests backend, roles, caja y asistente | **58 aprobadas** |
+| Controles HTTP y autorización en navegador | **27/27** |
+| Compilación React/TypeScript | Aprobada |
+| Instalación desde entorno Docker limpio | Aprobada |
+| Escáner estático, dependencias y accesibilidad automática | Aprobados |
+| Capturas de Chromium/Playwright | **240 originales** |
+| Encuadres adicionales en tamaño exacto del dispositivo | **40** |
+| Errores JavaScript no controlados en la matriz nueva | **0 detectados** |
+| Desbordamientos horizontales en la matriz nueva | **0 detectados** |
 
-Usuarios de demostración: `admin`, `cajero` y `cocina`. Lee el valor **`SEED_ADMIN_PASSWORD` de tu `.env` local** para la contraseña. Es una demo con insumos y pedidos ficticios, no un despliegue empresarial.
+[Ver ejecución íntegra y archivos de evidencia en GitHub Actions](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/actions/runs/45920182835).
 
-**[Manual de instalación paso a paso y solución de errores](docs/INSTALACION_LOCAL.md)** · [Operación comercial y despliegue seguro](deploy/OPERACIONES.md)
+La evidencia incluye `GALERIA_240.html`, `MANIFIESTO_SHA256_240.csv`, `REPORTE_EVIDENCIAS_240.json`, `inka-v5-results.json`, controles de seguridad y logs originales. Los PNG se toman con navegador real sobre datos ficticios y se conservan sin alteración. Los 40 encuadres de dispositivo están en `encuadres_viewport/` para su revisión visual; no reemplazan las 240 capturas completas.
 
-> **Rama GitHub:** mientras [el PR #11](https://github.com/rodo4940/TP2-Grupo11-PaladarInkaIA/pull/11) espera la revisión requerida para entrar en `main`, descarga la rama `feature/mvp-demostrable-qa-20261126` desde el selector de ramas. Descargar `main` antes de la fusión no garantiza encontrar este código.
+La conformidad de axe-core es **preliminar y automatizada**; no constituye certificación integral de WCAG. Estas pruebas tampoco equivalen a pruebas de aceptación UAT de trabajadores del restaurante.
 
-## Módulos operativos
+## 7. Documentación adicional
 
-| Área | Funcionalidades implementadas |
-|---|---|
-| Autenticación | JWT, Argon2, roles administrador/caja/cocina, revocación de sesiones tras cambio de clave |
-| Productos | Catálogo, precios, activación/desactivación, recetas por ingrediente |
-| Ventas y POS | Crear pedidos, calcular total en servidor, controlar stock, cobro único por pedido |
-| Cocina | Comandas y estados pendiente → preparando → listo → entregado |
-| Inventario | Existencias, mínimos, ajustes, consumo por receta y Kardex trazable |
-| Clientes | Registro, historial y totales de compras confirmadas |
-| Reportes | Ingresos confirmados por medio de pago y ranking de productos |
-| Inteligencia operativa | Recomendaciones heurísticas y previsión descriptiva de demanda con límites explícitos |
-| Seguridad y auditoría | Roles RBAC y bitácora de cambios críticos |
+- [Diseño integral, caja, analítica, roles y límites comerciales](docs/SISTEMA_OPERATIVO_V5.md).
+- [Instalación local detallada y recuperación ante fallos](docs/INSTALACION_LOCAL.md).
+- [Infraestructura y medidas antes de operar comercialmente](deploy/OPERACIONES.md).
+- [Registro de evidencias y automatización Playwright](.github/workflows/e2e-full-coverage.yml).
+- [Pruebas de lógica de negocio](backend/tests/test_business.py).
 
-**Importante:** el ticket generado es exclusivamente **interno**, no una boleta o factura electrónica de SUNAT. El módulo de inteligencia todavía no usa modelos ML entrenados con histórico real.
+## 8. Antes de atender operaciones reales
 
-## Ejecutar controles y detener
+No emplear esta versión con clientes o pagos del establecimiento hasta validar: pruebas UAT con responsables y firmas auténticas, datos y fotografías autorizados, infraestructura HTTPS y permisos revisados, respaldos con restauración probada, protección de datos personales, evaluación de carga, entrenamiento del personal y **emisión tributaria real independiente** cuando corresponda.
 
-```bash
-bash scripts/verify.sh
-# Detener y conservar los datos
-docker compose down
-# Borrado explícito de datos ficticios, con confirmación
-bash scripts/reset-demo.sh
-```
+La versión integrada en la rama `release/paladar-inka-v1-piloto` sirve como entregable técnico y demostración reproducible. El repositorio `main` está protegido: su actualización requiere el flujo de revisión correspondiente.
 
-CI integra pruebas backend sobre PostgreSQL, compilación React, una prueba de instalación desde cero con Docker y recorridos de navegador con capturas.
+---
 
-## Despliegue real y seguridad
-
-`docker-compose.prod.yml` y `deploy/Caddyfile` son una **plantilla de despliegue**, no autorización automática para operar con clientes ni cobrar pagos. Para producción deben verificarse seguridad, TLS, backups recuperables, auditoría, privacidad, UAT real y proceso tributario aplicable.
-
-- [Checklist **go / no-go**](docs/RELEASE_READINESS.md)
-- [Runbook de producción](deploy/OPERACIONES.md)
-- [Arquitectura técnica](docs/ARQUITECTURA.md)
-- [Pruebas y evidencias](docs/PLAN_QA.md)
-- [Manual de usuario](docs/MANUAL_USUARIO.md)
-- [Cobertura visual de pantallas](docs/UI_REFERENCIAS_Y_ESTADO.md)
-
-**Autores:** Jamil Shandee Hinojosa Ttito · Jose Paolo Champi Palacios · Rodolfo Muñoz Cruz · Erik Alexander Callañaupa Quispe.
-
-**Docente:** Ing. Néstor Gutiérrez Huamán.
+**Equipo del proyecto:** Jamil Shandee Hinojosa Ttito · Jose Paolo Champi Palacios · Rodolfo Muñoz Cruz · Erik Alexander Callañaupa Quispe.  
+**Asignatura:** Taller de Proyectos 2 · Universidad Continental.
