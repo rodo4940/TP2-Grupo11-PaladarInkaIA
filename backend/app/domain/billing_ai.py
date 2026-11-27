@@ -222,10 +222,28 @@ def rule_answer(question: str, facts: dict) -> tuple[str, list[str]]:
             ['payments', 'orders', 'ingredients'])
 
 
+def permitted_business_intent(raw_question: str) -> str:
+    """Devuelve una pregunta estándar, nunca texto libre del operador.
+
+    Evita remitir teléfonos, correos, datos personales o instrucciones inyectadas
+    por el chat a un proveedor externo configurado en el servidor.
+    """
+    q = raw_question.casefold()
+    if any(w in q for w in ('stock', 'inventario', 'insumo', 'reponer', 'abastecer')):
+        return '¿Qué alertas de inventario debo revisar primero?'
+    if any(w in q for w in ('pedido', 'cocina', 'prepar', 'entreg', 'demora')):
+        return '¿Cómo priorizar los pedidos activos en cocina?'
+    if any(w in q for w in ('producto', 'pizza', 'vendido', 'popular', 'recomend')):
+        return '¿Qué productos tienen mayor demanda pagada?'
+    if any(w in q for w in ('venta', 'ingreso', 'caja', 'recaud', 'compar', 'dinero')):
+        return '¿Qué se observa de los pagos registrados hoy y ayer?'
+    return 'Resume brevemente los indicadores agregados y sus limitaciones.'
+
+
 def model_answer(question: str, facts: dict) -> str | None:
     """Opt-in de proveedor real. Sin claves la aplicación sigue operando en modo local.
 
-    No se envían nombres de clientes, teléfonos, contraseñas, tokens ni identificadores.
+    No se envían nombres de clientes, teléfonos, contraseñas ni tokens; tampoco el texto libre original del operador.
     La respuesta del modelo no tiene capacidad de crear órdenes ni ejecutar herramientas.
     """
     settings = get_settings()
@@ -250,7 +268,7 @@ def model_answer(question: str, facts: dict) -> str | None:
                 'input': (
                     'INDICADORES AGREGADOS (JSON): ' +
                     json.dumps(facts, ensure_ascii=False) +
-                    '\nPREGUNTA DEL USUARIO: ' + question
+                    '\nPREGUNTA OPERATIVA ESTANDARIZADA: ' + permitted_business_intent(question)
                 ),
                 'max_output_tokens': 320,
                 'store': False,
