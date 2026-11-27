@@ -147,3 +147,20 @@ def test_cash_closeout_role_and_invalid_future_date(env):
     assert client.post('/api/v1/billing/closeouts', headers=auth['kitchen'], json=payload).status_code==403
     assert client.post('/api/v1/billing/closeouts', headers=auth['cashier'], json=payload).status_code==422
     assert client.get(f"/api/v1/billing/closeouts/{today.isoformat()}", headers=auth['cashier']).status_code==404
+
+
+def test_persistent_login_lockout_and_admin_password_reset(env):
+    client, auth, _ = env
+    url='/api/v1/auth/token'
+    for _ in range(4):
+        assert client.post(url, json={'username':'cajero','password':'wrong'}).status_code==401
+    blocked=client.post(url,json={'username':'cajero','password':'wrong'})
+    assert blocked.status_code==429 and int(blocked.headers['Retry-After'])>0
+    assert client.post(url,json={'username':'cajero','password':'PasswordSecure123'}).status_code==429
+    # No hay recuperación sin una segunda identidad administrativa autorizada.
+    reset=client.post('/api/v1/users/2/reset-password', headers=auth['admin'],
+                      json={'new_password':'ResetNewSecure456'})
+    assert reset.status_code==200, reset.text
+    assert client.post(url,json={'username':'cajero','password':'ResetNewSecure456'}).status_code==200
+    # Restablecimiento revoca JWT anteriores emitidos a ese usuario.
+    assert client.get('/api/v1/auth/me',headers=auth['cashier']).status_code==401
