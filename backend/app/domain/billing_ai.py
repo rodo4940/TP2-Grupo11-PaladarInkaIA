@@ -158,7 +158,8 @@ class AskIn(BaseModel):
 def insights_snapshot(db: Session) -> dict:
     today = datetime.now(LIMA).date()
     previous = today - timedelta(days=1)
-    paid = list(db.scalars(select(Payment).order_by(Payment.id.desc())))
+    paid = [p for p in db.scalars(select(Payment).order_by(Payment.id.desc()))
+            if not (p.refund and p.refund.status == 'confirmed')]
     active_orders = list(db.scalars(select(Order).where(Order.status.in_(['pending', 'preparing', 'ready']))))
     products = list(db.scalars(select(Product).where(Product.active.is_(True))))
     low_stock = list(db.scalars(select(Ingredient).where(Ingredient.stock <= Ingredient.minimum_stock)))
@@ -171,8 +172,8 @@ def insights_snapshot(db: Session) -> dict:
         for item in p.order.items:
             sold[item.product_name] += item.quantity
     return {
-        'today_sales_cents': day_totals[today],
-        'previous_day_sales_cents': day_totals[previous],
+        'today_sales_cents': daily_totals(db, today)['net_cash_flow_cents'],
+        'previous_day_sales_cents': daily_totals(db, previous)['net_cash_flow_cents'],
         'sample_paid_orders': len(paid),
         'active_orders': len(active_orders),
         'pending_kitchen': sum(x.status == 'pending' for x in active_orders),

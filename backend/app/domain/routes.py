@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.domain.auth import current_user, issue_token, require_roles, verify_password
-from app.domain.models import (AuditEvent, Customer, Ingredient, Order, OrderConsumption, OrderItem, Payment, Product, RecipeLine, StockMovement, User)
+from app.domain.models import (AuditEvent, Customer, Ingredient, Order, OrderConsumption, OrderItem, Payment, Product, RecipeLine, StockMovement, User, Refund)
 from app.domain.schemas import (AdjustStockIn, CustomerIn, CustomerOut, IngredientIn, IngredientOut, LoginIn, MovementOut, OrderIn, OrderOut, PaymentIn, PaymentOut, ProductIn, ProductOut, ProductPatch, CustomerPatch, RecipeIn, StatusIn, TokenOut, UserOut, UserCreate, RoleChange, ActiveChange, PasswordChange, PasswordReset)
 
 router = APIRouter()
@@ -286,7 +286,9 @@ def internal_receipt(order_id:int,db:Session=Depends(get_db),user:User=Depends(c
 @router.get('/dashboard')
 def dashboard(db:Session=Depends(get_db),user:User=Depends(current_user)) -> dict[str,Any]:
     orders=list(db.scalars(select(Order)))
-    sales=int(db.scalar(select(func.coalesce(func.sum(Payment.amount_cents),0))) or 0)
+    gross=int(db.scalar(select(func.coalesce(func.sum(Payment.amount_cents),0))) or 0)
+    returned=sum(x.payment.amount_cents for x in db.scalars(select(Refund).where(Refund.status=='confirmed')))
+    sales=gross-returned
     critical=list(db.scalars(select(Ingredient).where(Ingredient.stock<=Ingredient.minimum_stock).order_by(Ingredient.name)))
     return {'sales_cents':sales,'orders_total':len(orders),'orders_active':sum(o.status in {'pending','preparing','ready'} for o in orders),
             'orders_delivered':sum(o.status=='delivered' for o in orders),'customers_total':db.scalar(select(func.count(Customer.id))) or 0,
@@ -294,11 +296,15 @@ def dashboard(db:Session=Depends(get_db),user:User=Depends(current_user)) -> dic
 
 @router.get('/reports/sales')
 def sales_report(db:Session=Depends(get_db),user:User=Depends(cashier)) -> dict[str,Any]:
-    paid=list(db.scalars(select(Payment).order_by(Payment.created_at.desc())))
+    all_payments=list(db.scalars(select(Payment).order_by(Payment.created_at.desc())))
+    paid=[p for p in all_payments if not (p.refund and p.refund.status=='confirmed')]
+    refunds=[p for p in all_payments if p.refund and p.refund.status=='confirmed']
     top=Counter()
     for payment in paid:
         for item in payment.order.items:top[item.product_name]+=item.quantity
     return {'paid_orders':len(paid),'sales_cents':sum(p.amount_cents for p in paid),
+            'gross_payments_cents':sum(p.amount_cents for p in all_payments),
+            'confirmed_refunds_cents':sum(p.amount_cents for p in refunds),
             'by_method':dict(Counter({method:sum(p.amount_cents for p in paid if p.method==method) for method in {'cash','card','yape','plin'}})),
             'top_products':[{'name':name,'quantity':qty} for name,qty in top.most_common(10)]}
 
@@ -307,6 +313,7 @@ def recommendations(db:Session=Depends(get_db),user:User=Depends(current_user),l
     """Clasificador explicable de popularidad y disponibilidad. NO es un modelo ML."""
     sold=Counter()
     for payment in db.scalars(select(Payment)):
+        if payment.refund and payment.refund.status=='confirmed':continue
         for item in payment.order.items:sold[item.product_id]+=item.quantity
     rows=[]
     for p in db.scalars(select(Product).where(Product.active.is_(True))):
@@ -379,14 +386,15 @@ def demand_forecast(db:Session=Depends(get_db),user:User=Depends(cashier)) -> di
     """
     from datetime import date, timedelta
     from math import sqrt, ceil
-    start=date.today()-timedelta(days=6)
+    from zoneinfo import ZoneInfo
+    start=datetime.now(ZoneInfo('America/Lima')).date()-timedelta(days=6)
     days={start+timedelta(days=n):n for n in range(7)}
-    paid=list(db.scalars(select(Payment)))
+    paid=[p for p in db.scalars(select(Payment)) if not (p.refund and p.refund.status=='confirmed')]
     result=[]
     for p in db.scalars(select(Product).where(Product.active.is_(True))):
         sales=[0]*7
         for payment in paid:
-            day=payment.created_at.date()
+            day=(payment.created_at if payment.created_at.tzinfo else payment.created_at.replace(tzinfo=timezone.utc)).astimezone(ZoneInfo('America/Lima')).date()
             if day not in days:continue
             for item in payment.order.items:
                 if item.product_id==p.id:sales[days[day]]+=item.quantity
@@ -408,4 +416,4 @@ def system_info(user:User=Depends(admin)) -> dict[str,Any]:
     s=get_settings()
     return {'app':s.app_name,'version':'1.0.0','environment':s.app_env,
             'database':'PostgreSQL (modo operativo) / SQLite en tests',
-            'modules':['auth','orders','kitchen','inventory','products','customers','payments','reports','ai-heuristics','audit']}
+            'modules':['auth','orders','kitchen','inventory','products','customers','payments','refunds-manual','cash-closeout','reports','ai-heuristics','audit']}
