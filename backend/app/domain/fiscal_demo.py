@@ -22,11 +22,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.core.config import get_settings
 from app.domain.auth import require_roles
 from app.domain.models import AuditEvent, FiscalDemoDocument, Payment, User, Refund
 from app.domain.billing_ai import LIMA
 
-router=APIRouter()
+def laboratory_only():
+    if get_settings().app_env=='production':
+        raise HTTPException(403,'Simulador deshabilitado en producción; no emite SUNAT')
+
+router=APIRouter(dependencies=[Depends(laboratory_only)])
 cashier=require_roles('admin','cashier')
 admin=require_roles('admin')
 NOTICE='SIMULACIÓN ACADÉMICA SIN VALIDEZ TRIBUTARIA. NO EMITIDO NI CONSULTADO ANTE SUNAT.'
@@ -135,8 +140,8 @@ def make_xml(doc:FiscalDemoDocument, payment:Payment, original:str|None=None)->s
     category=elem(subtotal,'cac','TaxCategory')
     elem(category,'cbc','ID',doc.affectation_code)
     scheme=elem(category,'cac','TaxScheme')
-    elem(scheme,'cbc','ID','1000' if doc.affectation_code=='10' else '9997')
-    elem(scheme,'cbc','Name','IGV' if doc.affectation_code=='10' else 'EXO')
+    elem(scheme,'cbc','ID',{'10':'1000','20':'9997','30':'9998'}[doc.affectation_code])
+    elem(scheme,'cbc','Name',{'10':'IGV','20':'EXO','30':'INA'}[doc.affectation_code])
     elem(scheme,'cbc','TaxTypeCode','VAT' if doc.affectation_code=='10' else 'FRE')
     monetary=elem(root,'cac','LegalMonetaryTotal' if is_credit else 'LegalMonetaryTotal')
     elem(monetary,'cbc','LineExtensionAmount',money(doc.net_cents),{'currencyID':'PEN'})
@@ -155,7 +160,8 @@ def make_xml(doc:FiscalDemoDocument, payment:Payment, original:str|None=None)->s
         item=elem(one,'cac','Item')
         elem(item,'cbc','Description',line.product_name)
         price=elem(one,'cac','Price')
-        elem(price,'cbc','PriceAmount',money(int(Decimal(net)/line.quantity)),{'currencyID':'PEN'})
+        unit=Decimal(net)/(Decimal(100)*line.quantity)
+        elem(price,'cbc','PriceAmount',str(unit.quantize(Decimal('.0001'))),{'currencyID':'PEN'})
     return ET.tostring(root,encoding='unicode',xml_declaration=False)
 
 
@@ -191,7 +197,9 @@ def issue(payload:FiscalIssueIn,db:Session=Depends(get_db),user:User=Depends(cas
     if existing:raise HTTPException(409,'Este pago ya tiene comprobante de demostración')
     if payment.refund and payment.refund.status=='confirmed':
         raise HTTPException(409,'No emitir comprobante original sobre pago ya devuelto')
-    net,tax=split_tax(payment.amount_cents,payload.affectation_code)
+    net=sum(split_tax(item.quantity*item.unit_price_cents,payload.affectation_code)[0]
+            for item in payment.order.items)
+    tax=payment.amount_cents-net
     doc=FiscalDemoDocument(payment_id=payment.id,document_type=payload.document_type,
        series=SERIES[payload.document_type],correlative=0,
        issue_date=datetime.now(LIMA).date().isoformat(),customer_name=payload.customer_name,
