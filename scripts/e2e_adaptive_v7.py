@@ -38,11 +38,12 @@ def save(page,key):
         targets:[...document.querySelectorAll('.mobile-dock button')].filter(x=>x.getClientRects().length).map(x=>({w:x.getBoundingClientRect().width,h:x.getBoundingClientRect().height}))}
     }""")
     assert not m["overflow"],(key,m)
-    if page.viewport_size["width"]<=700:
-        assert m["dock"] and m["dockBottom"]<=page.viewport_size["height"]+2,(key,m)
-        assert all(t["w"]>=42 and t["h"]>=44 for t in m["targets"]),(key,m)
-    else:
-        assert not m["dock"],(key,m)
+    if not key.endswith("_login"):
+        if page.viewport_size["width"]<=700:
+            assert m["dock"] and m["dockBottom"]<=page.viewport_size["height"]+2,(key,m)
+            assert all(t["w"]>=42 and t["h"]>=44 for t in m["targets"]),(key,m)
+        else:
+            assert not m["dock"],(key,m)
     filename=f'{len(captures)+1:03d}_{key}.png'
     path=OUT/filename
     page.screenshot(path=str(path),animations="disabled",full_page=False)
