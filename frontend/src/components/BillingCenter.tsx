@@ -1,9 +1,10 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import type {RefObject} from 'react';
-import type {BillingDocument,BillingLedger} from '../types/domain';
+import type {BillingDocument,BillingLedger,Role} from '../types/domain';
 import {api} from '../services/api';
 import {InkaBrand} from './InkaBrand';
 import {CashCloseout} from './CashCloseout';
+import {RefundCenter} from './RefundCenter';
 
 const money=(v:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(v/100);
 const date=(v:string)=>new Date(v).toLocaleString('es-PE',{timeZone:'America/Lima',dateStyle:'medium',timeStyle:'short'});
@@ -13,7 +14,7 @@ const methodName:Record<string,string>={cash:'Efectivo',yape:'Yape',plin:'Plin',
  * Módulo de consulta y reimpresión. Fuente única: pagos persistidos en FastAPI.
  * No emite documentos tributarios. El número interno deriva de Payment.id.
  */
-export function BillingCenter({token}:{token:string}){
+export function BillingCenter({token,role,userId}:{token:string;role:Role;userId:number}){
  const [ledger,setLedger]=useState<BillingLedger|null>(null);
  const [selectedId,setSelectedId]=useState<number|null>(null);
  const [search,setSearch]=useState('');
@@ -51,7 +52,8 @@ export function BillingCenter({token}:{token:string}){
      <article><span>Ingreso registrado</span><strong>{ledger?money(ledger.total_cents):'—'}</strong><small>Total acumulado de pagos</small></article>
      <article><span>Importe filtrado</span><strong>{money(totalFiltered)}</strong><small>{filtered.length} documentos visibles</small></article>
    </div>
-   <CashCloseout token={token}/>
+   <CashCloseout token={token} role={role} userId={userId}/>
+   <RefundCenter token={token} role={role} userId={userId} entries={entries} onChanged={()=>void refresh()}/>
    <div className="billing-columns">
      <section className="panel billing-list">
        <div className="panel-head"><div><h3>Historial de pagos</h3><p>Una constancia por pago registrado; sin duplicar cobros</p></div><button className="secondary" type="button" disabled={loading} onClick={()=>void refresh()}>{loading?'Consultando…':'Actualizar'}</button></div>

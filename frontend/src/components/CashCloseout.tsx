@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {api} from '../services/api';
-import type {DailyCashSummary} from '../types/domain';
+import type {DailyCashSummary,Role} from '../types/domain';
+import {RegisteredCloseout} from './RegisteredCloseout';
 
 const amount=(c:number)=>new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN'}).format(c/100);
 const todayInPeru=()=>{
@@ -10,7 +11,7 @@ const todayInPeru=()=>{
 };
 const names:Record<string,string>={cash:'Efectivo',card:'Tarjeta',yape:'Yape',plin:'Plin'};
 
-export function CashCloseout({token}:{token:string}){
+export function CashCloseout({token,role,userId}:{token:string;role:Role;userId:number}){
  const [day,setDay]=useState(todayInPeru);
  const [summary,setSummary]=useState<DailyCashSummary|null>(null);
  const [error,setError]=useState('');
@@ -83,5 +84,6 @@ export function CashCloseout({token}:{token:string}){
      </div>
      <p className="cash-closeout-legal"><strong>Sin cierre registrado:</strong> este es un reporte informativo y una comparación local, no un arqueo firmado. La cantidad contada no se guarda ni modifica transacciones. Revisar vouchers, efectivo, faltantes y devoluciones pendientes antes de aprobar el cierre con la persona responsable. No es comprobante tributario.</p>
    </div>}
+   {summary&&<RegisteredCloseout token={token} day={day} role={role} userId={userId} countedCashCents={cashValue}/>}
  </section>;
 }

@@ -21,12 +21,14 @@ export interface InternalReceipt {type:'TICKET_INTERNO_NO_TRIBUTARIO';order_id:n
 export interface BillingDocument {
  id:number;document_number:string;document_type:'TICKET_INTERNO_NO_TRIBUTARIO';
  fiscal_status:'NO_EMITIDO_SUNAT';order_id:number;issued_at:string;
+ refund_status:'pending'|'confirmed'|null;net_cents:number;
  method:string;total_cents:number;customer_name:string;table_label:string;
  order_status:OrderStatus;items:Array<{name:string;quantity:number;unit_price_cents:number;subtotal_cents:number}>;
  disclaimer:string;
 }
 export interface BillingLedger {
  entries:BillingDocument[];count:number;total_cents:number;currency:'PEN';
+ confirmed_refunds_cents:number;net_registered_cents:number;
  fiscal_status:'NO_EMITIDO_SUNAT';disclaimer:string;
 }
 export interface BusinessSnapshot {
@@ -48,4 +50,21 @@ export interface DailyCashSummary {
  entries:BillingDocument[];
  reconciliation_state:'PENDIENTE_VERIFICACION_MANUAL';
  reconciliation_note:string;fiscal_status:'NO_EMITIDO_SUNAT';
+ confirmed_refunds_cents:number;net_cash_flow_cents:number;refunds_count:number;
+ refunds_by_method:Record<'cash'|'card'|'yape'|'plin',number>;
+ internal_closeout_state:'submitted'|'approved'|null;
+}
+
+/** La confirmación de devolución es HUMANA; la API no mueve dinero. */
+export interface InternalRefund {
+ id:number;payment_id:number;order_id:number;method:string;amount_cents:number;
+ reason:string;status:'pending'|'confirmed';requested_by:number;confirmed_by:number|null;
+ external_reference:string|null;created_at:string;confirmed_at:string|null;disclaimer:string;
+}
+export interface RegisteredCashCloseout {
+ id:number;day:string;state:'submitted'|'approved';opening_cash_cents:number;
+ expected_cash_cents:number;counted_cash_cents:number;variance_cents:number;
+ gross_payments_cents:number;confirmed_refunds_cents:number;payments_count:number;
+ refunds_count:number;submitted_by:number;approved_by:number|null;note:string;
+ approval_note:string;created_at:string;approved_at:string|null;stale:boolean;disclaimer:string;
 }
